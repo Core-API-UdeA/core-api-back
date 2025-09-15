@@ -51,7 +51,7 @@ module.exports = {
     },
 
     last_seen_at: {
-      type: 'number',
+      type: 'string',
       allowNull: true,
       columnType: 'bigint',
     },
