@@ -1,6 +1,6 @@
 module.exports = {
   datastore: "CoreApiDB",
-  tableName: "user",
+  tableName: "users",
 
   attributes: {
     email: {

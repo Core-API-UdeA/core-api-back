@@ -5,12 +5,13 @@ module.exports.datastores = {
     // timezone: '+0',
     // BASE DE DATOS ACCESO APLICACION
     adapter: "sails-postgresql",
-    url: "postgresql://CoreApiDBa:Z9E7xMd-ixHw8UH@HOST/CoreApiDB",
+    url: "postgresql://CoreApiDBa:Z9E7xMd-ixHw8UH@localhost:5432/CoreApiDB",
     timezone: "+0",
+
   },
   CoreApiDB: {
     adapter: "sails-postgresql",
-    url: "postgresql://CoreApiDBa:Z9E7xMd-ixHw8UH@HOST/CoreApiDB",
+    url: process.env.DATABASE_URL || 'postgresql://CoreApiDBa:Z9E7xMd-ixHw8UH@localhost:5432/CoreApiDB',
     timezone: "+0",
   },
 };
