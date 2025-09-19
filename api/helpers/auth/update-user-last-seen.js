@@ -33,7 +33,7 @@ module.exports = {
         );
       }
 
-      const updatedUser = await Usuario.updateOne({ id: userId }).set({
+      const updatedUser = await User.updateOne({ id: userId }).set({
         lastSeen: Date.now(),
       });
 
