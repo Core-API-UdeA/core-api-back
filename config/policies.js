@@ -10,4 +10,5 @@ module.exports.policies = {
 
   "auth/fetch": "auth/ok-fetch",
   "auth/login": "auth/validate-login-params",
+  'auth/register': 'auth/validate-register-params'
 };

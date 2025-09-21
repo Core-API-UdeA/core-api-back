@@ -32,6 +32,7 @@ module.exports.routes = addGlobalPrefix({
 
   "POST /auth/login": { action: "auth/login" },
   "GET /auth/fetch": { action: "auth/fetch" },
+  "POST /auth/register": { action: "auth/register" },
 
   // RUTA DE MONITOREO DE LA API
   'GET /': (req, res) => {
