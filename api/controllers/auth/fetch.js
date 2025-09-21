@@ -4,10 +4,6 @@ module.exports = {
   description: "Controller action for re-logging in a user.",
 
   inputs: {
-    uuidOrganizacion: {
-      type: 'string',
-      required: false
-    }
   },
 
   exits: {
@@ -22,7 +18,7 @@ module.exports = {
     },
   },
 
-  fn: async function ({uuidOrganizacion}, exits) {
+  fn: async function ({}, exits) {
     try {
       sails.log.verbose("\n--------> Controller de fetch (recuperación de sesión)\n\n");
 

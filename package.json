@@ -19,6 +19,7 @@
     "passport-jwt": "^4.0.1",
     "sails": "^1.5.14",
     "sails-hook-grunt": "^5.0.0",
+    "sails-hook-organics": "^3.0.0",
     "sails-hook-orm": "^4.0.3",
     "sails-hook-sockets": "^3.0.0",
     "sails-postgresql": "^5.0.1"

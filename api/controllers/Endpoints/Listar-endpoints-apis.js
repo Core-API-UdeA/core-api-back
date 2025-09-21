@@ -1,4 +1,4 @@
-smodule.exports = {
+module.exports = {
   friendlyName: "Listar endpoints",
 
   description: "Se listan endpoints de las apis registradas.",
