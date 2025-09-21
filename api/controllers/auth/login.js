@@ -72,11 +72,19 @@ module.exports = {
     } catch (error) {
       sails.log.error("Error logging in user:", error);
 
+      if (
+        error.code === "incorrect" ||
+        error.exit === "incorrect" ||
+        error.message.includes("checkPassword")
+      ) {
+        return exits.errorGeneral("Correo o contraseña inválidos");
+      }
+
       if (error.name === "UsageError") {
         return exits.badRequest(error.message);
       } else {
         return exits.errorGeneral(
-          "Error autenticando usuario: " + error.message
+          "Ocurrió un error al intentar autenticar. Intenta nuevamente."
         );
       }
     }
