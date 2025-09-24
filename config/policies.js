@@ -10,5 +10,6 @@ module.exports.policies = {
 
   "auth/fetch": "auth/ok-fetch",
   "auth/login": "auth/validate-login-params",
+  "auth/google-login": true,
   'auth/register': 'auth/validate-register-params'
 };

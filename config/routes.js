@@ -31,6 +31,7 @@ module.exports.routes = addGlobalPrefix({
   // RUTAS DE AUTENTICACIÓN
 
   "POST /auth/login": { action: "auth/login" },
+  "POST /auth/google-login": { action: "auth/google-login" },
   "GET /auth/fetch": { action: "auth/fetch" },
   "POST /auth/register": { action: "auth/register" },
 
