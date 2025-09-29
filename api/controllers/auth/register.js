@@ -47,13 +47,13 @@ module.exports = {
       // Validar si ya existe email
       const existingEmail = await User.findOne({ email: normalizedEmail });
       if (existingEmail) {
-        return exits.errorGeneral('El correo ya está registrado');
+        return exits.errorGeneral('The email is already registered');
       }
 
       // Validar si ya existe username
       const existingUsername = await User.findOne({ username: normalizedUsername });
       if (existingUsername) {
-        return exits.errorGeneral('El nombre de usuario ya está en uso');
+        return exits.errorGeneral('The username is already in use');
       }
 
       // Crear hash de la contraseña

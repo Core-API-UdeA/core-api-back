@@ -52,7 +52,7 @@ module.exports = {
       });
     } catch (e) {
       sails.log.error("Error Google login:", e);
-      return exits.errorGeneral("No se pudo autenticar con Google");
+      return exits.errorGeneral("Could not authenticate with Google");
     }
   },
 };

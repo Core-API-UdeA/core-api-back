@@ -44,7 +44,7 @@ module.exports = {
       }
 
       if (user.estado !== "Confirmed") {
-        return exits.errorGeneral("El usuario no está confirmado");
+        return exits.errorGeneral("The user is not confirmed");
       }
 
       await sails.helpers.passwords.checkPassword(password, user.password);
