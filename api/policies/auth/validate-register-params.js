@@ -9,8 +9,8 @@ module.exports = async function (req, res, proceed) {
     // Definir esquema de validación para registro
     const schema = Joi.object({
       email: Joi.string().email().required(),
-      username: Joi.string().min(3).max(60).required(),
-      password: Joi.string().min(8).required(),
+      username: Joi.string().min(5).max(60).required(),
+      password: Joi.string().min(8).max(40).required(),
       rol: Joi.string().valid('usuario', 'admin').optional() // Aca la idea es que se use el de defecto 'usuario'
     });
 

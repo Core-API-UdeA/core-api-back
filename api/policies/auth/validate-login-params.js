@@ -8,7 +8,7 @@ module.exports = async function (req, res, proceed) {
 
     const schema = Joi.object({
       email: Joi.string().email().required(),
-      password: Joi.string().min(8).required(),
+      password: Joi.string().min(8).max(40).required(),
     })
 
     const { error } = await schema.validateAsync(req.allParams());
