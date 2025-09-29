@@ -34,6 +34,7 @@ module.exports.routes = addGlobalPrefix({
   "POST /auth/google-login": { action: "auth/google-login" },
   "GET /auth/fetch": { action: "auth/fetch" },
   "POST /auth/register": { action: "auth/register" },
+  "POST /auth/forgot-password": { action: "auth/forgot-password" },
 
   // RUTA DE MONITOREO DE LA API
   'GET /': (req, res) => {
