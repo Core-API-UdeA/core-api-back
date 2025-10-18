@@ -37,6 +37,12 @@ module.exports.routes = addGlobalPrefix({
   "POST /auth/register": { action: "auth/register" },
   "POST /auth/forgot-password": { action: "auth/forgot-password" },
 
+  'POST /catalogo/favorite': { action: 'catalogo/actualizar-favorito' },
+  'POST /catalogo/rating': { action: 'catalogo/actualizar-rating' },
+
+  //pruebas
+  "GET /pruebas": { action: "catologo/obtener-detalle-api" },
+
   // RUTA DE MONITOREO DE LA API
   'GET /': (req, res) => {
     return res.send('¡API externa levantada y respondiendo!');

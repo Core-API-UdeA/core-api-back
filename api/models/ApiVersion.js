@@ -3,21 +3,10 @@ module.exports = {
   tableName: "api_versions",
 
   attributes: {
-    api_id: {
-      model: "api",
-      required: true,
-    },
-    version_name: { type: "string", required: true, maxLength: 50 },
+    version_name: { type: "string", required: true },
     changelog: { type: "string", allowNull: true },
-    created_at: { type: "ref", columnType: "timestamp", defaultsTo: new Date() },
-
-    endpoints: {
-      collection: "apiendpoint",
-      via: "api_version_id",
-    },
-    documentation: {
-      collection: "apidocumentation",
-      via: "api_version_id",
-    },
-  },
+    created_at: { type: "ref", columnType: "timestamp" },
+    api_id: { model: "api", required: true },
+    endpoints: { collection: "apiendpoint", via: "api_version_id" }
+  }
 };

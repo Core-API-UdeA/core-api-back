@@ -1,25 +1,41 @@
 module.exports = {
-  friendlyName: 'List APIs (Catalog overview)',
+  friendlyName: 'Listar APIs',
 
-  description: 'List all APIs with overview data for catalog display.',
+  description: 'Listar todas las APIs con overview data para la vista de catálogo.',
 
-  inputs: {},
+  inputs: {
+    pagination: {
+      description: 'Parámetros de paginación (page, rowsPerPage, sortBy, descending, limit).',
+      type: 'ref',
+      required: true,
+    },
+
+    filter: {
+      description: 'Filtros opcionales (por tipo, título, tecnología, etc).',
+      type: 'ref',
+      required: false,
+    },
+  },
 
   exits: {
     success: {
-      description: 'APIs listed successfully.',
+      description: 'Listado de APIs obtenido exitosamente.',
       responseType: 'okResponse',
     },
     errorGeneral: {
-      description: 'Unexpected error during API listing.',
+      description: 'Error inesperado durante la obtención de APIs.',
       responseType: 'nokResponse',
     },
   },
 
-  fn: async function (_, exits) {
-    sails.log.verbose('-----> Controller: List APIs (Catalog overview)');
+  fn: async function ({ pagination, filter }, exits) {
+    sails.log.verbose('-----> Controlador: Listar APIs');
+
     try {
-      const apis = await sails.helpers.catalogo.listarApis();
+      const apis = await sails.helpers.catalogo.listarApis.with({
+        pagination,
+        filter,
+      });
 
       return exits.success({
         mensaje: 'APIs retrieved successfully.',

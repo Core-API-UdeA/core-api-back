@@ -4,14 +4,32 @@ module.exports = {
   description: 'Helper to register or update a user rating or favorite for an API.',
 
   inputs: {
-    apiId: { type: 'string', required: true },
-    userId: { type: 'string', required: true },
-    rating: { type: 'number', allowNull: true },
-    favorite: { type: 'boolean', allowNull: true },
+    apiId: {
+      type: 'string',
+      required: true,
+      description: 'API ID to rate or mark as favorite.',
+    },
+    userId: {
+      type: 'string',
+      required: true,
+      description: 'User performing the action.',
+    },
+    rating: {
+      type: 'number',
+      allowNull: true,
+      min: 1,
+      max: 5,
+      description: 'Rating value from 1 to 5.',
+    },
+    favorite: {
+      type: 'boolean',
+      allowNull: true,
+      description: 'True to mark as favorite, false to unmark.',
+    },
   },
 
   exits: {
-    success: { description: 'All done.' },
+    success: { description: 'Interaction registered successfully.' },
   },
 
   fn: async function ({ apiId, userId, rating, favorite }) {
@@ -19,16 +37,20 @@ module.exports = {
     var flaverr = require('flaverr');
 
     try {
-      const existing = await ApiUserInteraction.findOne({ api_id: apiId, user_id: userId });
+      // Busca si ya existe interacción previa (favorito o rating)
+      const existing = await ApiUserInteraction.findOne({
+        api_id: apiId,
+        user_id: userId,
+      });
 
       if (existing) {
-        // Update existing record
+        // Si existe, se actualiza
         await ApiUserInteraction.updateOne({ id: existing.id }).set({
           rating: rating ?? existing.rating,
           favorite: favorite ?? existing.favorite,
         });
       } else {
-        // Create new record
+        // Si no existe, se crea una nueva interacción
         await ApiUserInteraction.create({
           api_id: apiId,
           user_id: userId,
@@ -37,20 +59,27 @@ module.exports = {
         });
       }
 
-      // Recalculate average rating for the API
-      const ratings = await ApiUserInteraction.find({ api_id: apiId, rating: { '!=': null } });
-      const avg =
-        ratings.length > 0
-          ? ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length
+      // Recalcular promedio y número de calificaciones
+      const ratings = await ApiUserInteraction.find({
+        api_id: apiId,
+        where: { rating: { '!=': null } },
+      });
+
+      const totalVotes = ratings.length;
+      const avgRating =
+        totalVotes > 0
+          ? ratings.reduce((sum, r) => sum + Number(r.rating || 0), 0) / totalVotes
           : 0;
 
+      // Actualizar en la tabla de APIs
       await Api.updateOne({ id: apiId }).set({
-        rating_average: avg,
-        rating_count: ratings.length,
+        rating_average: avgRating.toFixed(2),
+        rating_count: totalVotes,
       });
 
       return { updated: true };
     } catch (error) {
+      sails.log.error('Error in registrarValoracionFavorito:', error);
       throw flaverr({ code: 'E_REGISTRAR_VALORACION_FAVORITO' }, error);
     }
   },
