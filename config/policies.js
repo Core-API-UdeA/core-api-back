@@ -12,5 +12,6 @@ module.exports.policies = {
   "auth/login": "auth/validate-login-params",
   "auth/google-login": true,
   "auth/github-login": true,
-  'auth/register': 'auth/validate-register-params'
+  'auth/register': 'auth/validate-register-params',
+  'auth/confirmate': true,
 };

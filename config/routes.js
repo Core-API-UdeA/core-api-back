@@ -35,6 +35,7 @@ module.exports.routes = addGlobalPrefix({
   "POST /auth/github-login": { action: "auth/github-login" },
   "GET /auth/fetch": { action: "auth/fetch" },
   "POST /auth/register": { action: "auth/register" },
+  "POST /auth/confirmation": { action: "auth/confirmate" },
   "POST /auth/forgot-password": { action: "auth/forgot-password" },
 
   'POST /catalogo/favorite': { action: 'catalogo/actualizar-favorito' },

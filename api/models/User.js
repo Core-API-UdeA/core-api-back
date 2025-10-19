@@ -55,6 +55,20 @@ module.exports = {
       allowNull: true,
       columnType: 'bigint',
     },
+
+    emailConfirmationToken: {
+      type: 'string',
+      allowNull: true,
+      description:
+        'Un token único utilizado para verificar la dirección de correo electrónico del usuario.',
+    },
+
+    emailConfirmationTokenExpiresAt: {
+      type: 'number',
+      allowNull: true,
+      description:
+        'Un JS timestamp que representa el momento en que `emailConfirmationToken` expira.',
+    },
   },
 
   primaryKey: 'id',

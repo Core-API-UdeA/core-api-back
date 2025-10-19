@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirma tu correo - CoreAPI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #1a1a1a;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      border: 1px solid #2a2a2a;
+    }
+    .header {
+      background: linear-gradient(135deg, #00a8a8 0%, #008080 100%);
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    .header-subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .greeting {
+      font-size: 24px;
+      color: #ffffff;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .subtext {
+      color: #b0b0b0;
+      font-size: 14px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .message-box {
+      background: #252525;
+      border-left: 4px solid #00a8a8;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .message-box p {
+      color: #e0e0e0;
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .button-container {
+      text-align: center;
+      margin: 35px 0;
+    }
+    .confirm-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #00a8a8 0%, #008080 100%);
+      color: white;
+      padding: 16px 48px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 168, 168, 0.3);
+    }
+    .confirm-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(0, 168, 168, 0.4);
+    }
+    .alternative-section {
+      background: #252525;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 30px;
+    }
+    .alternative-title {
+      color: #b0b0b0;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .link-text {
+      word-break: break-all;
+      color: #00a8a8;
+      font-size: 12px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      background: #1a1a1a;
+      padding: 10px;
+      border-radius: 4px;
+      display: block;
+    }
+    .footer {
+      background: #1a1a1a;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #2a2a2a;
+    }
+    .footer-message {
+      color: #808080;
+      font-size: 13px;
+      margin-bottom: 15px;
+      line-height: 1.6;
+    }
+    .footer-signature {
+      color: #606060;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 20px;
+    }
+    .cta-info {
+      color: #00a8a8;
+      font-weight: 600;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">COREAPI</div>
+      <div class="header-subtitle">Escala tu innovación al siguiente nivel</div>
+    </div>
+
+    <div class="content">
+      <div class="greeting">¡Bienvenido, {{name}}!</div>
+      <p class="subtext">Estamos emocionados de tenerte en CoreAPI. Para comenzar a acceder a nuestros microservicios listos para producción, necesitamos verificar tu correo electrónico.</p>
+
+      <div class="message-box">
+        <p>Haz clic en el botón de abajo para confirmar tu cuenta y desbloquear acceso a +100 APIs, +5000 descargas semanales y todo lo que CoreAPI tiene para ti.</p>
+      </div>
+
+      <div class="button-container">
+        <a href="{{confirmationUrl}}" class="confirm-button">Confirmar mi correo</a>
+      </div>
+
+      <div class="alternative-section">
+        <div class="alternative-title">O copia este enlace:</div>
+        <a href="{{confirmationUrl}}" class="link-text">{{confirmationUrl}}</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p class="footer-message">
+        Este enlace expirará en <span class="cta-info">24 horas</span>. Si no solicitaste esta confirmación, puedes ignorar este correo de forma segura.
+      </p>
+      <p class="footer-message">
+        ¿Preguntas? Visita nuestro <span class="cta-info">Centro de Ayuda</span> o contáctanos directamente.
+      </p>
+      <div class="footer-signature">
+        El equipo de CoreAPI<br>
+        <small style="color: #505050;">© 2025 CoreAPI. Todos los derechos reservados.</small>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
