@@ -29,9 +29,12 @@ module.exports = {
       let user = await User.findOne({ email: googleUser.email });
 
       if (!user) {
+        const normalizedUsername = await sails.helpers.util.normalizeUsername.with({
+          name: googleUser.name,
+        });
         user = await User.create({
           email: googleUser.email,
-          username: googleUser.name,
+          username: normalizedUsername,
           estado: "Confirmed",
           password: "google-auth",
         }).fetch();

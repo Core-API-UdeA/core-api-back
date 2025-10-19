@@ -31,15 +31,21 @@ module.exports = {
       sails.log.verbose("\n--------> Iniciando login con GitHub\n");
 
       // Verificar el código y obtener la información del usuario desde el helper
-      const githubUser = await sails.helpers.auth.verifyGithubCode.with({ code });
+      const githubUser = await sails.helpers.auth.verifyGithubCode.with({
+        code,
+      });
 
       // Buscar usuario existente o crear uno nuevo
       let user = await User.findOne({ email: githubUser.email });
 
       if (!user) {
+        const normalizedUsername =
+          await sails.helpers.util.normalizeUsername.with({
+            name: githubUser.name,
+          });
         user = await User.create({
           email: githubUser.email,
-          username: githubUser.name || githubUser.login,
+          username: normalizedUsername,
           estado: "Confirmed",
           password: "github-auth",
         }).fetch();
