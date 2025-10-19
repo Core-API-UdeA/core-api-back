@@ -39,8 +39,7 @@ module.exports = {
     try {
       // Busca si ya existe interacción previa (favorito o rating)
       const existing = await ApiUserInteraction.findOne({
-        api_id: apiId,
-        user_id: userId,
+        where: { api_id: apiId, user_id: userId },
       });
 
       if (existing) {
@@ -61,8 +60,10 @@ module.exports = {
 
       // Recalcular promedio y número de calificaciones
       const ratings = await ApiUserInteraction.find({
-        api_id: apiId,
-        where: { rating: { '!=': null } },
+        where: {
+          api_id: apiId,
+          rating: { "!=": null },
+        },
       });
 
       const totalVotes = ratings.length;
@@ -80,7 +81,7 @@ module.exports = {
       return { updated: true };
     } catch (error) {
       sails.log.error('Error in registrarValoracionFavorito:', error);
-      throw flaverr({ code: 'E_REGISTRAR_VALORACION_FAVORITO' }, error);
+      throw flaverr({ code: 'E_REG_VAL_FAV' }, error);
     }
   },
 };

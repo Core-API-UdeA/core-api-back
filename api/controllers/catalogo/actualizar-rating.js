@@ -33,7 +33,7 @@ module.exports = {
     sails.log.verbose('-----> Controller: Actualizar calificación');
 
     try {
-      const userId = this.req.decoded.sub.id;
+      const userId = this.req.decoded.sub;
 
       await sails.helpers.catalogo.registrarValoracionFavorito.with({
         apiId,
