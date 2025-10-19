@@ -1,36 +1,50 @@
 module.exports = {
-  friendlyName: 'Obtener API Documentation',
+  friendlyName: "Obtener API Documentation",
 
-  description: 'Helper to get the complete documentation of a specific API, including endpoints, parameters, body, and responses.',
+  description:
+    "Helper to get the complete documentation of a specific API, including endpoints, parameters, body, and responses.",
 
   inputs: {
     apiId: {
-      type: 'string',
+      type: "string",
       required: true,
-      description: 'UUID of the API whose documentation should be fetched.',
+      description: "UUID of the API whose documentation should be fetched.",
     },
   },
 
   exits: {
-    success: { description: 'All done.' },
+    success: { description: "All done." },
   },
 
   fn: async function ({ apiId }, exits) {
-    sails.log.verbose('-----> Helper: Obtener API Documentation');
-    const flaverr = require('flaverr');
+    sails.log.verbose("-----> Helper: Obtener API Documentation");
+    const flaverr = require("flaverr");
 
     try {
       // Verificar que la API exista
       const api = await Api.findOne({ id: apiId });
       if (!api) {
-        throw flaverr({ code: 'E_API_NOT_FOUND' }, new Error('API not found'));
+        throw flaverr({ code: "E_API_NOT_FOUND" }, new Error("API not found"));
       }
 
-      // Buscar todos los endpoints relacionados con la API
-      const endpoints = await ApiEndpoint.find({ api_id: apiId })
-        .populate('parameters')
-        .populate('bodies')
-        .populate('responses');
+      // Obtener las versiones de la API
+      const versions = await ApiVersion.find({ api_id: apiId });
+
+      // Si no hay versiones, terminar
+      if (!versions || versions.length === 0) {
+        return exits.success({
+          api_id: apiId,
+          title: api.title,
+          documentation: [],
+        });
+      }
+
+      // Buscar endpoints de todas las versiones
+      const versionIds = versions.map((v) => v.id);
+      const endpoints = await ApiEndpoint.find({ api_version_id: versionIds })
+        .populate("parameters")
+        .populate("bodies")
+        .populate("responses");
 
       // Formatear la documentación para el frontend
       const formattedDocs = endpoints.map((ep) => ({
@@ -55,13 +69,13 @@ module.exports = {
         })),
       }));
 
-      return exits.success({
+      return {
         api_id: apiId,
         title: api.title,
         documentation: formattedDocs,
-      });
+      };
     } catch (error) {
-      throw flaverr({ code: 'E_OBTENER_API_DOCUMENTATION' }, error);
+      throw flaverr({ code: "E_OBTENER_API_DOCUMENTATION" }, error);
     }
   },
 };

@@ -26,7 +26,7 @@ module.exports = {
     sails.log.verbose('-----> Controller: Obtener API Documentation');
 
     try {
-      const documentation = await sails.helpers.catalogo.obtenerApiDocumentation.with({ apiId });
+      const documentation = await sails.helpers.catalogo.obtenerApiDocumentation.with({ apiId: apiId });
 
       return exits.success({
         mensaje: 'API documentation retrieved successfully.',
