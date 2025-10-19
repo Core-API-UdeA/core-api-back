@@ -19,11 +19,7 @@ module.exports = {
     },
   },
 
-  exits: {
-    success: { description: "All done." },
-  },
-
-  fn: async function ({ pagination, filter }, exits) {
+  fn: async function ({ pagination, filter }) {
     sails.log.verbose("-----> Helper: Listar APIs");
     const flaverr = require("flaverr");
 
@@ -62,19 +58,8 @@ module.exports = {
 
       // --- CONSULTAR APIS CON DATOS DEL DUEÑO ---
       const apis = await Api.find(queryTable)
-        .select(
-          "id",
-          "title",
-          "type",
-          "short_summary",
-          "price",
-          "rating_average",
-          "rating_count",
-          "views",
-          "technology_stack",
-          "created_at"
-        )
         .populate("owner_id");
+
       //.populate("owner_id", { select: ["id", "username", "email"] });
 
       // --- FORMATEAR SALIDA ---

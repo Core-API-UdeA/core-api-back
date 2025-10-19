@@ -37,14 +37,12 @@ module.exports = {
         filter,
       });
 
-      console.log('apis',apis)
-
       return exits.success({
         mensaje: 'APIs retrieved successfully.',
-        datos: {
+        data: {
           pagination: apis.pagination,
           records: {
-            data: apis.apis,
+            data: apis.apis.data,
           },
         },
       });
