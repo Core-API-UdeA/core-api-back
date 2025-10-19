@@ -1,18 +1,21 @@
 module.exports = {
   friendlyName: "Listar APIs",
 
-  description: "Obtiene todas las APIs con información resumida para el catálogo.",
+  description:
+    "Obtiene todas las APIs con información resumida para el catálogo.",
 
   inputs: {
     pagination: {
       type: "ref",
       required: true,
-      description: "Información de paginación (page, rowsPerPage, sortBy, descending, limit).",
+      description:
+        "Información de paginación (page, rowsPerPage, sortBy, descending, limit).",
     },
     filter: {
       type: "ref",
       required: false,
-      description: "Filtros opcionales (tipo, tecnología, búsqueda por título, etc).",
+      description:
+        "Filtros opcionales (tipo, tecnología, búsqueda por título, etc).",
     },
   },
 
@@ -26,39 +29,40 @@ module.exports = {
 
     try {
       // --- PAGINACIÓN ---
-      const { page = 1, rowsPerPage = 10, sortBy, descending } = pagination;
-      const skip = (page - 1) * rowsPerPage;
-      const limit = +rowsPerPage;
-
-      // --- FILTRO DINÁMICO ---
-      let filtroWhere = {};
-      if (filter) {
-        if (filter.type) filtroWhere.type = filter.type;
-        if (filter.technology_stack)
-          filtroWhere.technology_stack = { contains: filter.technology_stack };
-        if (filter.title)
-          filtroWhere.title = { contains: filter.title };
-      }
+      let { page, rowsPerPage, sortBy, descending } = pagination;
+      const startRow = (page - 1) * rowsPerPage;
+      let filtroSortBy = [];
+      const limit = +pagination.limite;
 
       // --- ORDENAMIENTO ---
-      let sort = [];
+      let sort = {};
       if (sortBy) {
-        const direction = descending ? "DESC" : "ASC";
-        sort.push({ [sortBy]: direction });
+        sort[sortBy] = descending ? "DESC" : "ASC";
+        filtroSortBy = [sort];
       } else {
         sort.push({ created_at: "DESC" });
       }
 
+      // --- FILTRO DINÁMICO ---
+      let filtroWhere = {};
+
+      let queryCount = {
+        where: filtroWhere,
+      };
+
+      let queryTable = {
+        where: filtroWhere,
+        skip: startRow,
+        limit: rowsPerPage,
+        sort: filtroSortBy,
+      };
+
       // --- CONTAR TOTAL DE REGISTROS ---
-      const total = await Api.count({ where: filtroWhere });
+      pagination.rowsNumber = await Api.count(queryCount);
 
       // --- CONSULTAR APIS CON DATOS DEL DUEÑO ---
-      const apis = await Api.find({
-        where: filtroWhere,
-        skip,
-        limit,
-        sort,
-        select: [
+      const apis = await Api.find(queryTable)
+        .select(
           "id",
           "title",
           "type",
@@ -68,16 +72,13 @@ module.exports = {
           "rating_count",
           "views",
           "technology_stack",
-          "created_at",
-        ],
-      })
-        .populate("owner_id", { select: ["id", "username", "email"] });
+          "created_at"
+        )
+        .populate("owner_id");
+      //.populate("owner_id", { select: ["id", "username", "email"] });
 
       // --- FORMATEAR SALIDA ---
       const resultado = {
-        total,
-        page,
-        rowsPerPage,
         data: apis.map((api) => ({
           id: api.id,
           title: api.title,
@@ -88,16 +89,21 @@ module.exports = {
           rating_count: api.rating_count,
           views: api.views,
           technology_stack: api.technology_stack,
-          owner: api.owner_id ? {
-            id: api.owner_id.id,
-            username: api.owner_id.username,
-            email: api.owner_id.email,
-          } : null,
+          owner: api.owner_id
+            ? {
+                id: api.owner_id.id,
+                username: api.owner_id.username,
+                email: api.owner_id.email,
+              }
+            : null,
           created_at: api.created_at,
         })),
       };
 
-      return resultado;
+      return {
+        pagination: pagination,
+        apis: resultado,
+      };
     } catch (error) {
       throw flaverr({ code: "E_LISTAR_APIS" }, error);
     }

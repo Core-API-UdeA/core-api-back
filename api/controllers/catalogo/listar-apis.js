@@ -37,9 +37,16 @@ module.exports = {
         filter,
       });
 
+      console.log('apis',apis)
+
       return exits.success({
         mensaje: 'APIs retrieved successfully.',
-        datos: apis,
+        datos: {
+          pagination: apis.pagination,
+          records: {
+            data: apis.apis,
+          },
+        },
       });
     } catch (error) {
       sails.log.error('Error listing APIs:', error);
