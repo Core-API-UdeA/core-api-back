@@ -30,7 +30,7 @@ module.exports = {
 
       return exits.success({
         mensaje: 'API overview retrieved successfully.',
-        datos: apiOverview,
+        data: apiOverview,
       });
     } catch (error) {
       sails.log.error('Error retrieving API overview:', error);

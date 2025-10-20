@@ -12,11 +12,7 @@ module.exports = {
     },
   },
 
-  exits: {
-    success: { description: "All done." },
-  },
-
-  fn: async function ({ apiId }, exits) {
+  fn: async function ({ apiId }) {
     sails.log.verbose("-----> Helper: Obtener API Documentation");
     const flaverr = require("flaverr");
 
@@ -32,11 +28,11 @@ module.exports = {
 
       // Si no hay versiones, terminar
       if (!versions || versions.length === 0) {
-        return exits.success({
+        return {
           api_id: apiId,
           title: api.title,
           documentation: [],
-        });
+        };
       }
 
       // Buscar endpoints de todas las versiones

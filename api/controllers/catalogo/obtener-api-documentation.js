@@ -30,7 +30,7 @@ module.exports = {
 
       return exits.success({
         mensaje: 'API documentation retrieved successfully.',
-        datos: documentation,
+        data: documentation,
       });
     } catch (error) {
       sails.log.error('Error retrieving API documentation:', error);
