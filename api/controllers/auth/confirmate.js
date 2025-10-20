@@ -52,7 +52,7 @@ module.exports = {
       await User.updateOne({ id: user.id }).set({
         emailConfirmationToken: null,
         emailConfirmationTokenExpiresAt: null,
-        status: "Confirmed",
+        estado: "Confirmed",
       });
 
       const payload = {

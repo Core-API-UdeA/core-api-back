@@ -12,11 +12,7 @@ module.exports = {
     },
   },
 
-  exits: {
-    success: { description: "All done." },
-  },
-
-  fn: async function ({ apiId }, exits) {
+  fn: async function ({ apiId }) {
     sails.log.verbose("-----> Helper: Obtener API Overview");
     const flaverr = require("flaverr");
 

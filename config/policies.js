@@ -13,6 +13,8 @@ module.exports.policies = {
   "auth/google-login": true,
   "auth/github-login": true,
   "catalogo/listar-apis": true,
+  "catalogo/obtener-api-overview": true,
+  "catalogo/obtener-api-documentation": true,
   'auth/register': 'auth/validate-register-params',
   'auth/confirmate': true,
 };
