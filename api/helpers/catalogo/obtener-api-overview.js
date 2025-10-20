@@ -30,7 +30,6 @@ module.exports = {
 
         // Organizar la información que quiero enviar al front
         api.owner_id = {
-          id: api.owner_id.id,
           username: api.owner_id.username,
           email: api.owner_id.email,
         };
@@ -84,7 +83,6 @@ module.exports = {
           favorites: totalFavorites,
           owner: api.owner_id
             ? {
-                id: api.owner_id.id,
                 username: api.owner_id.username,
                 email: api.owner_id.email,
               }

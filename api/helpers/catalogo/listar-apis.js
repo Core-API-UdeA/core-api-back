@@ -76,7 +76,6 @@ module.exports = {
           technology_stack: api.technology_stack,
           owner: api.owner_id
             ? {
-                id: api.owner_id.id,
                 username: api.owner_id.username,
                 email: api.owner_id.email,
               }
