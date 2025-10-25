@@ -41,7 +41,7 @@ module.exports = {
       if (!user) {
         const normalizedUsername =
           await sails.helpers.util.normalizeUsername.with({
-            name: githubUser.name,
+            name: githubUser.login,
           });
         user = await User.create({
           email: githubUser.email,
