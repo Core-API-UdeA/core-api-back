@@ -22,18 +22,13 @@ module.exports = {
       max: 5,
       description: "Rating value from 1 to 5.",
     },
-    favorite: {
-      type: "boolean",
-      allowNull: true,
-      description: "True to mark as favorite, false to unmark.",
-    },
   },
 
   exits: {
     success: { description: "Interaction registered successfully." },
   },
 
-  fn: async function ({ apiId, userId, rating, favorite }) {
+  fn: async function ({ apiId, userId, rating }) {
     sails.log.verbose("-----> Helper: Register rating or favorite");
     var flaverr = require("flaverr");
 
@@ -44,12 +39,16 @@ module.exports = {
           where: { api_id: apiId, user_id: userId },
         });
 
+        let favorite = existing ? !existing.favorite : true;
+
         if (existing) {
           // Si existe, se actualiza
-          await ApiUserInteraction.updateOne({ id: existing.id }).set({
-            rating: rating ?? existing.rating,
-            favorite: favorite ?? existing.favorite,
-          }).usingConnection(db);
+          await ApiUserInteraction.updateOne({ id: existing.id })
+            .set({
+              rating: rating ?? existing.rating,
+              favorite: favorite,
+            })
+            .usingConnection(db);
         } else {
           // Si no existe, se crea una nueva interacción
           await ApiUserInteraction.create({
@@ -76,13 +75,14 @@ module.exports = {
             : 0;
 
         // Actualizar en la tabla de APIs
-        await Api.updateOne({ id: apiId }).set({
-          rating_average: avgRating.toFixed(2),
-          rating_count: totalVotes,
-        }).usingConnection(db);
+        await Api.updateOne({ id: apiId })
+          .set({
+            rating_average: avgRating.toFixed(2),
+            rating_count: totalVotes,
+          })
+          .usingConnection(db);
+        return favorite;
       });
-
-      return { updated: true };
     } catch (error) {
       sails.log.error("Error in registrarValoracionFavorito:", error);
       throw flaverr({ code: "E_REG_VAL_FAV" }, error);

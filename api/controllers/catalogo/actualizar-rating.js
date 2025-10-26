@@ -43,7 +43,7 @@ module.exports = {
 
       return exits.success({
         mensaje: 'Rating registered successfully.',
-        datos: { apiId, rating },
+        data: { apiId, rating },
       });
     } catch (error) {
       sails.log.error('Error updating rating:', error);
