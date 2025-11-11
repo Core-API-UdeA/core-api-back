@@ -38,14 +38,18 @@ module.exports.routes = addGlobalPrefix({
   "POST /auth/confirmation": { action: "auth/confirmate" },
   "POST /auth/forgot-password": { action: "auth/forgot-password" },
 
+  // RUTAS DE MANEJO DEL CATALOGO
+
   'PUT /catalogo/favorite': { action: 'catalogo/actualizar-favorito' },
   'PUT /catalogo/rating': { action: 'catalogo/actualizar-rating' },
   "GET /catalogo/listarapis": { action: "catalogo/listar-apis" },
   "GET /catalogo/obtenerdocumentacion": { action: "catalogo/obtener-api-documentation" },
   "GET /catalogo/obteneroverview": { action: "catalogo/obtener-api-overview" },
   "GET /catalogo/obteneruserinteraction": { action: "catalogo/obtener-user-interaction" },
+  "POST /catalogo/registrarapioverview": { action: "catalogo/registrar-api-overview" },
 
   // RUTA DE MONITOREO DE LA API
+
   'GET /': (req, res) => {
     return res.send('¡API externa levantada y respondiendo!');
   },
