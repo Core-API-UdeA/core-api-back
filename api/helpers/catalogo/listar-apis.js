@@ -17,9 +17,13 @@ module.exports = {
       description:
         "Filtros opcionales (tipo, tecnología, búsqueda por título, etc).",
     },
+    userId: {
+      type: "ref",
+      required: false,
+    }
   },
 
-  fn: async function ({ pagination, filter }) {
+  fn: async function ({ pagination, filter, userId }) {
     sails.log.verbose("-----> Helper: Listar APIs");
     const flaverr = require("flaverr");
 
@@ -41,6 +45,10 @@ module.exports = {
 
       // --- FILTRO DINÁMICO ---
       let filtroWhere = {};
+
+      if (filter?.myApis) {
+        filtroWhere.owner_id = userId.id;
+      }
 
       let queryCount = {
         where: filtroWhere,

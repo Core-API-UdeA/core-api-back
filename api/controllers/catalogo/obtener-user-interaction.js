@@ -36,9 +36,6 @@ module.exports = {
       const favorite = favoriteRecord ? favoriteRecord.favorite : false;
       const alreadyRated = favoriteRecord ? favoriteRecord.rating : null;
 
-      console.log("Favorite:", favorite);
-      console.log("favoriteRecord.rating:", favoriteRecord.rating);
-
       return exits.success({
         mensaje: "API obtenida correctamente.",
         data: { apiId, favorite, alreadyRated },

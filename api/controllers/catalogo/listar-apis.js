@@ -32,9 +32,13 @@ module.exports = {
     sails.log.verbose('-----> Controlador: Listar APIs');
 
     try {
+      const userId = this.req.me;
+      console.log(filter,userId)
+
       const apis = await sails.helpers.catalogo.listarApis.with({
         pagination,
         filter,
+        userId,
       });
 
       return exits.success({

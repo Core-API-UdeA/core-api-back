@@ -12,9 +12,10 @@ module.exports.policies = {
   "auth/login": "auth/validate-login-params",
   "auth/google-login": true,
   "auth/github-login": true,
-  "catalogo/listar-apis": true,
-  "catalogo/obtener-api-overview": true,
-  "catalogo/obtener-api-documentation": true,
   'auth/register': 'auth/validate-register-params',
   'auth/confirmate': true,
+
+  "catalogo/listar-apis": ['auth/try-authenticated'],
+  "catalogo/obtener-api-overview": ['auth/try-authenticated'],
+  "catalogo/obtener-api-documentation": ['auth/try-authenticated'],
 };
