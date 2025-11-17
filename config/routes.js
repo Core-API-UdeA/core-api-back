@@ -42,6 +42,7 @@ module.exports.routes = addGlobalPrefix({
 
   'PUT /catalogo/favorite': { action: 'catalogo/actualizar-favorito' },
   'PUT /catalogo/rating': { action: 'catalogo/actualizar-rating' },
+  "PUT /catalogo/views": { action: "catalogo/actualizar-views" },
   "GET /catalogo/listarapis": { action: "catalogo/listar-apis" },
   "GET /catalogo/obtenerdocumentacion": { action: "catalogo/obtener-api-documentation" },
   "GET /catalogo/obteneroverview": { action: "catalogo/obtener-api-overview" },
