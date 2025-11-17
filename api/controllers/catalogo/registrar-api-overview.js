@@ -1,7 +1,7 @@
 module.exports = {
-  friendlyName: "Registar API",
+  friendlyName: "Registar API Overview",
 
-  description: "Crear API",
+  description: "Crear API - Overview",
 
   inputs: {
     apiId: {

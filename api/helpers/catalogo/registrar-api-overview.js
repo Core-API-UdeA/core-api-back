@@ -35,9 +35,9 @@ module.exports = {
     const flaverr = require("flaverr");
 
     try {
-      let overview = {};
+      let overview = null;
 
-      await Api.getDatastore().transaction(async (db) => {
+      overview = await Api.getDatastore().transaction(async (db) => {
         let existingApi = null;
 
         if (apiId) {
@@ -61,11 +61,17 @@ module.exports = {
           if (datosApi.readme !== undefined)
             updateData.readme = datosApi.readme;
 
-          overview = await Api.updateOne({ id: apiId })
+          await Api.updateOne({ id: apiId })
             .set(updateData)
             .usingConnection(db);
 
           sails.log.verbose(`API Overview actualizado exitosamente: ${apiId}`);
+
+          const updated = await Api.findOne({ id: apiId })
+            .populate("owner_id")
+            .usingConnection(db);
+
+          return updated;
         } else {
           sails.log.verbose(`Creando nuevo API Overview`);
 
@@ -91,23 +97,21 @@ module.exports = {
             updated_at: new Date(),
           };
 
-          overview = await Api.create(createData).fetch().usingConnection(db);
+          const created = await Api.create(createData).fetch().usingConnection(db);
+
           await ApiUserInteraction.create({
             favorite: false,
             created_at: new Date(),
             user_id: ownerId,
-            api_id: overview.id,
+            api_id: created.id,
           }).usingConnection(db);
 
-          sails.log.verbose(`API Overview creado exitosamente: ${apiId}`);
+          sails.log.verbose("API Overview creado exitosamente:", overview);
+          return created;
         }
-
-        overview = await Api.findOne({ id: apiId })
-          .populate("owner_id")
-          .usingConnection(db);
       });
 
-      return overview;
+      return overview
     } catch (error) {
       sails.log.error("Error en helper Registrar API Overview:", error);
 

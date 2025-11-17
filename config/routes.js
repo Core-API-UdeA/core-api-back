@@ -47,6 +47,7 @@ module.exports.routes = addGlobalPrefix({
   "GET /catalogo/obteneroverview": { action: "catalogo/obtener-api-overview" },
   "GET /catalogo/obteneruserinteraction": { action: "catalogo/obtener-user-interaction" },
   "POST /catalogo/registrarapioverview": { action: "catalogo/registrar-api-overview" },
+  "POST /catalogo/registrardocumentacion": { action: "catalogo/registrar-api-documentation" },
 
   // RUTA DE MONITOREO DE LA API
 
