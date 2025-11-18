@@ -68,6 +68,11 @@ module.exports = {
       return {
         api_id: apiId,
         title: api.title,
+        version: {
+          id: versions[0].id,
+          name: versions[0].version_name,
+          changelog: versions[0].changelog,
+        },
         documentation: formattedDocs,
       };
     } catch (error) {

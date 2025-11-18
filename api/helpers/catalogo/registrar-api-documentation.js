@@ -301,9 +301,25 @@ module.exports = {
           }
         }
 
+        sails.log.verbose(`=== Documentación registrada exitosamente ===`);
         sails.log.verbose(
-          `Documentación registrada exitosamente. Endpoints procesados: ${result.endpoints.length}`
+          `Total endpoints procesados: ${result.endpoints.length}`
         );
+        sails.log.verbose(
+          `Creados: ${result.totalCreated} | Actualizados: ${result.totalUpdated}`
+        );
+
+        // Verificación final
+        const finalEndpoints = await ApiEndpoint.find({
+          api_version_id: apiVersion.id,
+        }).usingConnection(db);
+
+        sails.log.verbose(
+          `Endpoints finales en BD para esta versión: ${finalEndpoints.length}`
+        );
+        finalEndpoints.forEach((ep, idx) => {
+          sails.log.verbose(`  ${idx + 1}. ${ep.method} ${ep.path} (${ep.id})`);
+        });
       });
 
       return {
