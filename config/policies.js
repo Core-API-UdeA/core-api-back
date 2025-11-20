@@ -14,8 +14,10 @@ module.exports.policies = {
   "auth/github-login": true,
   'auth/register': 'auth/validate-register-params',
   'auth/confirmate': true,
+  'webhook/mercadopago': true,
 
   "catalogo/listar-apis": ['auth/try-authenticated'],
   "catalogo/obtener-api-overview": ['auth/try-authenticated'],
   "catalogo/obtener-api-documentation": ['auth/try-authenticated'],
+  "catalogo/listar-planes": ['auth/try-authenticated'],
 };
