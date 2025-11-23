@@ -30,9 +30,6 @@ module.exports = {
   exits: {
     success: {
       description: "Webhook procesado exitosamente"
-    },
-    errorGeneral: {
-      description: "Error al procesar webhook"
     }
   },
 
@@ -49,27 +46,52 @@ module.exports = {
       let notificationId = data?.id || id;
 
       if (!notificationType || !notificationId) {
-        sails.log.warn("Webhook sin tipo o ID válido");
+        sails.log.warn("Webhook sin tipo o ID válido, ignorando");
         return exits.success(); // Retornar 200 para que MP no reintente
       }
 
-      // Log completo para debug
-      sails.log.verbose(`Procesando: ${notificationType} - ID: ${notificationId}`);
+      // Log para debug
+      sails.log.verbose(`Procesando webhook: ${notificationType} - ID: ${notificationId}`);
 
-      // Procesar según el tipo
-      await sails.helpers.pagos.mercadopago.procesarWebhook.with({
-        type: notificationType,
-        data: { id: notificationId }
-      });
+      // Procesar según el tipo con manejo de errores
+      try {
+        const result = await sails.helpers.pagos.mercadopago.procesarWebhook.with({
+          type: notificationType,
+          data: { id: notificationId }
+        });
 
-      // Siempre retornar 200 OK para que MP no siga reenviando
+        if (result.ignored) {
+          sails.log.verbose(`Webhook ignorado (recurso no encontrado): ${notificationType} - ${notificationId}`);
+        } else {
+          sails.log.verbose(`Webhook procesado exitosamente: ${notificationType} - ${notificationId}`);
+        }
+      } catch (processingError) {
+        // Log del error pero no fallar el webhook
+        sails.log.error('Error al procesar webhook:', {
+          type: notificationType,
+          id: notificationId,
+          error: processingError.message || processingError
+        });
+
+        // Si es un error de "no encontrado", es probablemente un timing issue
+        // MP envía webhooks muy rápido, a veces antes de que el recurso esté disponible
+        if (processingError.status === 404 ||
+            processingError.error === 'not_found' ||
+            processingError.message?.includes('not found')) {
+          sails.log.warn(`Recurso no encontrado (timing issue), webhook será reintentado por MP si es necesario`);
+        }
+      }
+
+      // SIEMPRE retornar 200 OK para que MP no siga reenviando
+      // Los errores ya quedaron loggeados arriba
       return exits.success();
 
     } catch (error) {
-      sails.log.error("Error al procesar webhook MP:", error);
+      // Error crítico en el controlador mismo
+      sails.log.error("Error crítico en webhook controller:", error);
 
-      // Aunque haya error, retornar 200 para evitar reintentos infinitos
-      // El error ya quedó loggeado
+      // Aún así retornar 200 para evitar reintentos infinitos
+      // El error quedó loggeado
       return exits.success();
     }
   }

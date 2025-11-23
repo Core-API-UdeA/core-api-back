@@ -1,4 +1,3 @@
-// api/controllers/suscripciones/cancelar-suscripcion.js
 module.exports = {
   friendlyName: "Cancelar Suscripción",
 

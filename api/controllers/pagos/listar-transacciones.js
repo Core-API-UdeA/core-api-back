@@ -1,36 +1,11 @@
-// api/controllers/pagos/listar-transacciones.js
 module.exports = {
-  friendlyName: "Listar Mis Transacciones",
+  friendlyName: "Mis Transacciones",
 
-  description: "Lista las transacciones del usuario autenticado",
-
-  inputs: {
-    page: {
-      type: "number",
-      defaultsTo: 1,
-      description: "Número de página"
-    },
-    limit: {
-      type: "number",
-      defaultsTo: 10,
-      description: "Cantidad de resultados por página"
-    },
-    status: {
-      type: "string",
-      isIn: ["pending", "processing", "completed", "failed", "refunded", "cancelled"],
-      required: false,
-      description: "Filtrar por estado"
-    },
-    apiId: {
-      type: "string",
-      required: false,
-      description: "Filtrar por API específica"
-    }
-  },
+  description: "Obtiene el historial de transacciones del usuario autenticado",
 
   exits: {
     success: {
-      description: "Transacciones encontradas",
+      description: "Transacciones obtenidas exitosamente",
       responseType: "okResponse"
     },
     unauthorized: {
@@ -38,70 +13,63 @@ module.exports = {
       responseType: "nokResponse"
     },
     errorGeneral: {
-      description: "Error al listar transacciones",
+      description: "Error al obtener transacciones",
       responseType: "nokResponse"
     }
   },
 
-  fn: async function ({ page, limit, status, apiId }, exits) {
-    sails.log.verbose("-----> Controller: Listar Mis Transacciones");
+  fn: async function (inputs, exits) {
+    sails.log.verbose("-----> Controller: Mis Transacciones");
 
     try {
-      // Verificar autenticación
-      const userId = this.req.decoded.sub
+      const userId = this.req.decoded.sub;
 
       if (!userId) {
         return exits.unauthorized({
-          mensaje: "Debes iniciar sesión para ver tus transacciones"
+          mensaje: "Debes iniciar sesión"
         });
       }
 
-      // Construir query
-      const where = { user_id: userId };
-
-      if (status) {
-        where.payment_status = status;
-      }
-
-      if (apiId) {
-        where.api_id = apiId;
-      }
-
-      // Calcular skip
-      const skip = (page - 1) * limit;
-
-      // Obtener transacciones
-      const transactions = await ApiTransaction.find({
-        where,
-        skip,
-        limit,
-        sort: 'created_at DESC'
+      // Obtener transacciones del usuario
+      const transacciones = await ApiTransaction.find({
+        user_id: userId
       })
-      .populate("api_id")
-      .populate("plan_id")
-      .populate("subscription_id");
+      .populate('api_id')
+      .populate('plan_id')
+      .populate('subscription_id')
+      .sort('transaction_date DESC')
+      .limit(50);
 
-      // Contar total
-      const total = await ApiTransaction.count({ where });
+      // Formatear respuesta
+      const transaccionesFormateadas = transacciones.map(t => ({
+        id: t.id,
+        api_name: t.api_id?.title || 'API no disponible',
+        api_id: t.api_id?.id,
+        plan_name: t.plan_id?.name || 'Plan no disponible',
+        plan_id: t.plan_id?.id,
+        transaction_type: t.transaction_type,
+        amount: t.amount,
+        total_amount: t.total_amount,
+        currency: t.currency,
+        payment_status: t.payment_status,
+        payment_provider: t.payment_provider,
+        payment_provider_transaction_id: t.payment_provider_transaction_id,
+        subscription_id: t.subscription_id?.id,
+        description: t.description,
+        transaction_date: t.transaction_date,
+        completed_at: t.completed_at,
+        created_at: t.created_at
+      }));
 
       return exits.success({
-        mensaje: "Transacciones encontradas",
-        data: {
-          transactions,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit)
-          }
-        }
+        mensaje: "Transacciones obtenidas exitosamente",
+        data: transaccionesFormateadas
       });
 
     } catch (error) {
-      sails.log.error("Error al listar transacciones:", error);
-
+      sails.log.error("Error al obtener transacciones:", error);
       return exits.errorGeneral({
-        mensaje: error.message || "Error al listar transacciones"
+        mensaje: error.message || "Error al obtener transacciones"
       });
     }
   }

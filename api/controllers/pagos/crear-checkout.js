@@ -1,4 +1,3 @@
-// api/controllers/pagos/crear-checkout.js
 module.exports = {
   friendlyName: "Crear Checkout de Pago",
 

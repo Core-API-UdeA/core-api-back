@@ -1,4 +1,3 @@
-// api/controllers/suscripciones/listar-suscripciones.js
 module.exports = {
   friendlyName: "Listar Mis Suscripciones",
 

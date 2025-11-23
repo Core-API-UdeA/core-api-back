@@ -66,6 +66,7 @@ module.exports.routes = addGlobalPrefix({
   "POST /pagos/crear-checkout": "pagos/crear-checkout",
   "GET /pagos/transaccion/:transactionId": "pagos/consultar-transaccion",
   "GET /pagos/mis-transacciones": "pagos/listar-transacciones",
+  "POST /pagos/verificar-pago": "pagos/verificar-pago",
 
   // WEBHOOKS
 
