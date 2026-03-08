@@ -29,7 +29,7 @@ module.exports.security = {
 
   cors: {
     allRoutes: true,
-    allowOrigins: ["http://localhost:9000", 'https://core-api-zeta.vercel.app'],
+    allowOrigins: ["http://localhost:9000", 'https://core-api-zeta.vercel.app', 'http://192.168.1.83:9000'],
     allowCredentials: true,
     allowRequestHeaders: "content-type, authorization",
     allowResponseHeaders: "content-disposition",
