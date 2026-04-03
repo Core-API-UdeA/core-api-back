@@ -96,7 +96,7 @@ module.exports = {
         });
       }
 
-      if (error.code === "invalidPlan") {
+      if (error.code === "invalidPlan" || error.code === "freePlan") {
         return exits.invalidPlan({
           mensaje: error.message || "El plan seleccionado no es válido"
         });

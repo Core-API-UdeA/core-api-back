@@ -45,15 +45,34 @@ module.exports = {
       // Formatear la documentación para el frontend
       const formattedDocs = endpoints.map((ep) => ({
         id: ep.id,
-        method: ep.method, // GET, POST, PUT, DELETE, etc.
+        method: ep.method,
         path: ep.path,
         description: ep.description,
-        parameters: ep.parameters.map((p) => ({
-          name: p.name,
-          type: p.type,
-          required: p.required,
-          description: p.description,
-        })),
+        is_auth_endpoint:    ep.is_auth_endpoint    || false,
+        auth_notes:          ep.auth_notes           || null,
+        requires_token_from: ep.requires_token_from  || null,
+        // Solo query/path params (excluir headers para no duplicar)
+        parameters: ep.parameters
+          .filter((p) => !p.location || p.location !== 'header')
+          .map((p) => ({
+            name:        p.name,
+            type:        p.type,
+            required:    p.required,
+            description: p.description,
+            location:    p.location || 'query',
+            example:     p.example  || null,
+          })),
+        // Headers: parámetros con location='header' — array separado
+        headers: ep.parameters
+          .filter((p) => p.location === 'header')
+          .map((p) => ({
+            name:        p.name,
+            type:        p.type,
+            required:    p.required,
+            description: p.description,
+            example:     p.example || null,
+            location:    'header',
+          })),
         body: ep.bodies.map((b) => ({
           example: b.example,
           description: b.description,

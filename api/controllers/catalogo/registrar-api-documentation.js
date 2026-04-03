@@ -16,8 +16,7 @@ module.exports = {
       example: "v1",
     },
     changelog: {
-      type: "string",
-      required: false,
+      type: "ref",
       description: "Version changelog/notes",
     },
     endpoints: {

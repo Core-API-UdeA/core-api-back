@@ -17,8 +17,7 @@ module.exports = {
       example: "v1",
     },
     changelog: {
-      type: "string",
-      required: false,
+      type: "ref",
       description: "Version changelog/notes",
     },
     endpoints: {
@@ -205,6 +204,9 @@ module.exports = {
             path: endpointData.path,
             method: endpointData.method.toUpperCase(),
             description: endpointData.description || null,
+            is_auth_endpoint:    endpointData.is_auth_endpoint    || false,
+            auth_notes:          endpointData.auth_notes           || null,
+            requires_token_from: endpointData.requires_token_from  || null,
             created_at: new Date(),
           })
             .fetch()
@@ -215,12 +217,15 @@ module.exports = {
           );
 
           // Crear parámetros
+          // Fusionar query/path params con headers (que llegan como array separado)
+          const todosLosParams = [
+            ...(Array.isArray(endpointData.parameters) ? endpointData.parameters : []),
+            ...(Array.isArray(endpointData.headers)    ? endpointData.headers    : []),
+          ];
+
           const parameters = [];
-          if (
-            endpointData.parameters &&
-            Array.isArray(endpointData.parameters)
-          ) {
-            for (const paramData of endpointData.parameters) {
+          if (todosLosParams.length > 0) {
+            for (const paramData of todosLosParams) {
               if (!paramData.name || !paramData.type) {
                 sails.log.warn(
                   "Parámetro sin name o type, saltando:",
@@ -236,6 +241,8 @@ module.exports = {
                 type: paramData.type,
                 required: paramData.required || false,
                 description: paramData.description || null,
+                location: paramData.location || 'query',
+                example:  paramData.example  || null,
               })
                 .fetch()
                 .usingConnection(db);

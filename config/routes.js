@@ -64,6 +64,7 @@ module.exports.routes = addGlobalPrefix({
   // PAGOS
 
   "POST /pagos/crear-checkout": "pagos/crear-checkout",
+  "POST /pagos/suscribir-gratis": "pagos/suscribir-gratis",
   "GET /pagos/transaccion/:transactionId": "pagos/consultar-transaccion",
   "GET /pagos/mis-transacciones": "pagos/listar-transacciones",
   "POST /pagos/verificar-pago": "pagos/verificar-pago",
@@ -76,11 +77,26 @@ module.exports.routes = addGlobalPrefix({
   // SUSCRIPCIONES
 
   "GET /suscripciones/mis-suscripciones":
-    "suscripciones/listar-suscripciones",
+    "pagos/listar-suscripciones",
   "PUT /suscripciones/cancelar/:subscriptionId":
-    "suscripciones/cancelar-suscripcion",
+    "pagos/cancelar-suscripcion",
 
-  // RUTA DE MONITOREO DE LA API
+  // ─── GATEWAY - GESTIÓN DE CONEXIONES (proveedor) ─────────────────────────
+  "GET /gateway/metricas/:apiId":      { action: "gateway/obtener-metricas" },
+  "POST /gateway/conexion":           { action: "gateway/registrar-conexion" },
+  "POST /gateway/conexion/verificar": { action: "gateway/verificar-conexion" },
+
+  // ─── GATEWAY DE PROXY ────────────────────────────────────────────────────
+  // Wildcard que captura cualquier método HTTP y cualquier subruta.
+  // La policy is-authenticated valida el JWT del consumidor antes de llegar aquí.
+
+  "GET /gateway/:apiSlug/*":    { action: "gateway/proxy" },
+  "POST /gateway/:apiSlug/*":   { action: "gateway/proxy" },
+  "PUT /gateway/:apiSlug/*":    { action: "gateway/proxy" },
+  "PATCH /gateway/:apiSlug/*":  { action: "gateway/proxy" },
+  "DELETE /gateway/:apiSlug/*": { action: "gateway/proxy" },
+
+  // ─── RUTA DE MONITOREO DE LA API ─────────────────────────────────────────
 
   "GET /": (req, res) => {
     return res.send("¡API externa levantada y respondiendo!");

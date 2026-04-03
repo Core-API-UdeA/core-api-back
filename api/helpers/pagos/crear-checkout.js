@@ -96,6 +96,14 @@ module.exports = {
           );
         }
 
+        // Si el plan es gratuito, no debe pasar por aquí
+        if (Number(plan.price) === 0) {
+          throw flaverr(
+            { code: "freePlan" },
+            new Error("Este plan es gratuito. Usa el endpoint /pagos/suscribir-gratis.")
+          );
+        }
+
         // 3. Obtener información de la API
         const api = await Api.findOne({ id: apiId })
           .populate("owner_id")

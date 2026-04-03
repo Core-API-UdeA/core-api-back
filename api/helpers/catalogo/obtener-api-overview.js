@@ -68,6 +68,7 @@ module.exports = {
         // Formatear la salida final
         overview = {
           id: api.id,
+          slug: api.slug || null,
           title: api.title,
           type: api.type,
           short_summary: api.short_summary,

@@ -82,9 +82,19 @@ module.exports = {
             );
           }
 
+          // Generar slug URL-friendly a partir del título
+          const slug = datosApi.title
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .substring(0, 160);
+
           const createData = {
             title: datosApi.title,
             owner_id: ownerId,
+            slug: slug,
             type: datosApi.type || null,
             short_summary: datosApi.short_summary || null,
             price: datosApi.price || 0,

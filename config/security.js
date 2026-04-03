@@ -31,8 +31,31 @@ module.exports.security = {
     allRoutes: true,
     allowOrigins: ["http://localhost:9000", 'https://core-api-zeta.vercel.app', 'http://192.168.1.83:9000'],
     allowCredentials: true,
-    allowRequestHeaders: "content-type, authorization",
-    allowResponseHeaders: "content-disposition",
+    allowRequestHeaders: [
+      // Headers estándar
+      "content-type",
+      "authorization",
+      "accept",
+      "origin",
+      "x-requested-with",
+      // Headers del gateway — los que el proveedor puede requerir
+      "x-firma",
+      "x-fecha",
+      "x-token",
+      "x-api-key",
+      "x-api-version",
+      "x-client-id",
+      "x-client-secret",
+      "x-access-token",
+      "x-auth-token",
+      "x-session-token",
+      "x-correlation-id",
+      "x-request-id",
+      "x-trace-id",
+      "api-key",
+      "api-version",
+    ].join(", "),
+    allowResponseHeaders: "content-disposition, x-coreapi-latency-ms, x-coreapi-api-slug",
   },
 
   /****************************************************************************
