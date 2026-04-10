@@ -31,9 +31,7 @@ module.exports = {
       defaultsTo: 'none',
     },
     credential: {
-      type: 'string',
-      required: false,
-      maxLength: 2000,
+      type: 'ref',
       description: 'Credencial en texto plano solo para la prueba. No se persiste.',
     },
     apiKeyHeaderName: {
