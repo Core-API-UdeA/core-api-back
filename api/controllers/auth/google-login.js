@@ -1,3 +1,5 @@
+const crypto = require("crypto");
+
 module.exports = {
   friendlyName: "Google Login",
 
@@ -29,14 +31,15 @@ module.exports = {
       let user = await User.findOne({ email: googleUser.email });
 
       if (!user) {
-        const normalizedUsername = await sails.helpers.util.normalizeUsername.with({
-          name: googleUser.name,
-        });
+        const normalizedUsername =
+          await sails.helpers.util.normalizeUsername.with({
+            name: googleUser.name,
+          });
         user = await User.create({
           email: googleUser.email,
           username: normalizedUsername,
           estado: "Confirmed",
-          password: "google-auth",
+          password: crypto.randomBytes(32).toString("hex"),
         }).fetch();
       }
 

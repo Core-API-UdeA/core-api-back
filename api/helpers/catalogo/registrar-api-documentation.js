@@ -1,3 +1,213 @@
+const flaverr = require("flaverr");
+const { v4: uuidv4 } = require("uuid");
+
+// ─── Funciones extraídas (CC ~5 cada una) ────────────────────────────────────
+
+/**
+ * Verifica que la API exista en la BD.
+ * CC ~2
+ */
+async function resolverApi(apiId, db) {
+  const api = await Api.findOne({ id: apiId }).usingConnection(db);
+  if (!api) {
+    throw flaverr(
+      { code: "E_API_NOT_FOUND" },
+      new Error(`API with id ${apiId} not found`)
+    );
+  }
+  sails.log.verbose(`API encontrada: ${api.title}`);
+  return api;
+}
+
+/**
+ * Busca o crea la versión. Si ya existe y updateExisting=false, lanza error.
+ * CC ~4
+ */
+async function resolverVersion(apiId, versionName, changelog, updateExisting, db) {
+  let apiVersion = await ApiVersion.findOne({
+    api_id: apiId,
+    version_name: versionName,
+  }).usingConnection(db);
+
+  if (apiVersion && !updateExisting) {
+    throw flaverr(
+      { code: "E_VERSION_EXISTS" },
+      new Error(
+        `Version ${versionName} already exists. Set updateExisting=true to update it.`
+      )
+    );
+  }
+
+  if (!apiVersion) {
+    apiVersion = await ApiVersion.create({
+      id: uuidv4(),
+      api_id: apiId,
+      version_name: versionName,
+      changelog: changelog || null,
+      created_at: new Date(),
+    })
+      .fetch()
+      .usingConnection(db);
+
+    sails.log.verbose(`Nueva versión creada: ${versionName}`);
+  } else {
+    if (changelog) {
+      await ApiVersion.updateOne({ id: apiVersion.id })
+        .set({ changelog })
+        .usingConnection(db);
+    }
+    sails.log.verbose(`Versión actualizada: ${versionName}`);
+  }
+
+  return apiVersion;
+}
+
+/**
+ * Elimina todos los endpoints y sus relaciones para una versión dada.
+ * CC ~3
+ */
+async function eliminarEndpointsAntiguos(apiVersionId, db) {
+  const oldEndpoints = await ApiEndpoint.find({
+    api_version_id: apiVersionId,
+  }).usingConnection(db);
+
+  for (const oldEndpoint of oldEndpoints) {
+    await ApiParameter.destroy({ endpoint_id: oldEndpoint.id }).usingConnection(db);
+    await ApiBody.destroy({ endpoint_id: oldEndpoint.id }).usingConnection(db);
+    await ApiResponse.destroy({ endpoint_id: oldEndpoint.id }).usingConnection(db);
+  }
+
+  await ApiEndpoint.destroy({ api_version_id: apiVersionId }).usingConnection(db);
+}
+
+/**
+ * Crea los parámetros (query, path, headers) de un endpoint.
+ * CC ~4
+ */
+async function crearParametros(endpointId, endpointData, db) {
+  const todosLosParams = [
+    ...(Array.isArray(endpointData.parameters) ? endpointData.parameters : []),
+    ...(Array.isArray(endpointData.headers) ? endpointData.headers : []),
+  ];
+
+  const parameters = [];
+  for (const paramData of todosLosParams) {
+    if (!paramData.name || !paramData.type) {
+      sails.log.warn("Parámetro sin name o type, saltando:", paramData);
+      continue;
+    }
+    const parameter = await ApiParameter.create({
+      id: uuidv4(),
+      endpoint_id: endpointId,
+      name: paramData.name,
+      type: paramData.type,
+      required: paramData.required || false,
+      description: paramData.description || null,
+      location: paramData.location || "query",
+      example: paramData.example || null,
+    })
+      .fetch()
+      .usingConnection(db);
+
+    parameters.push(parameter);
+  }
+  return parameters;
+}
+
+/**
+ * Crea los bodies de un endpoint.
+ * CC ~3
+ */
+async function crearBodies(endpointId, endpointData, db) {
+  const bodies = [];
+  if (!Array.isArray(endpointData.bodies)) return bodies;
+
+  for (const bodyData of endpointData.bodies) {
+    const body = await ApiBody.create({
+      id: uuidv4(),
+      endpoint_id: endpointId,
+      content_type: bodyData.content_type || "application/json",
+      example: bodyData.example || null,
+    })
+      .fetch()
+      .usingConnection(db);
+
+    bodies.push(body);
+  }
+  return bodies;
+}
+
+/**
+ * Crea las responses de un endpoint.
+ * CC ~4
+ */
+async function crearResponses(endpointId, endpointData, db) {
+  const responses = [];
+  if (!Array.isArray(endpointData.responses)) return responses;
+
+  for (const responseData of endpointData.responses) {
+    if (!responseData.status_code) {
+      sails.log.warn("Response sin status_code, saltando:", responseData);
+      continue;
+    }
+    const response = await ApiResponse.create({
+      id: uuidv4(),
+      endpoint_id: endpointId,
+      status_code: responseData.status_code,
+      content_type: responseData.content_type || "application/json",
+      example: responseData.example || null,
+    })
+      .fetch()
+      .usingConnection(db);
+
+    responses.push(response);
+  }
+  return responses;
+}
+
+/**
+ * Crea un endpoint completo con sus parámetros, bodies y responses.
+ * CC ~5
+ */
+async function crearEndpointCompleto(apiVersionId, endpointData, db) {
+  if (!endpointData.path || !endpointData.method) {
+    sails.log.warn("Endpoint sin path o method, saltando:", endpointData);
+    return null;
+  }
+
+  const validMethods = ["GET", "POST", "PUT", "DELETE", "PATCH"];
+  if (!validMethods.includes(endpointData.method.toUpperCase())) {
+    sails.log.warn(`Método inválido: ${endpointData.method}, saltando endpoint`);
+    return null;
+  }
+
+  const endpoint = await ApiEndpoint.create({
+    id: uuidv4(),
+    api_version_id: apiVersionId,
+    path: endpointData.path,
+    method: endpointData.method.toUpperCase(),
+    description: endpointData.description || null,
+    is_auth_endpoint: endpointData.is_auth_endpoint || false,
+    auth_notes: endpointData.auth_notes || null,
+    requires_token_from: endpointData.requires_token_from || null,
+    created_at: new Date(),
+  })
+    .fetch()
+    .usingConnection(db);
+
+  sails.log.verbose(`Endpoint creado: ${endpoint.method} ${endpoint.path}`);
+
+  const [parameters, bodies, responses] = await Promise.all([
+    crearParametros(endpoint.id, endpointData, db),
+    crearBodies(endpoint.id, endpointData, db),
+    crearResponses(endpoint.id, endpointData, db),
+  ]);
+
+  return { endpoint, parameters, bodies, responses };
+}
+
+// ─── Helper principal ─────────────────────────────────────────────────────────
+
 module.exports = {
   friendlyName: "Registrar API Documentation",
 
@@ -24,74 +234,18 @@ module.exports = {
       type: "json",
       required: true,
       description: "Array of endpoint objects with their documentation",
-      example: [
-        {
-          path: "/users",
-          method: "GET",
-          description: "Get all users",
-          parameters: [
-            {
-              name: "page",
-              type: "integer",
-              required: false,
-              description: "Page number for pagination",
-            },
-            {
-              name: "limit",
-              type: "integer",
-              required: false,
-              description: "Number of items per page",
-            },
-          ],
-          bodies: [],
-          responses: [
-            {
-              status_code: 200,
-              content_type: "application/json",
-              example: { users: [], total: 0 },
-            },
-          ],
-        },
-        {
-          path: "/users",
-          method: "POST",
-          description: "Create a new user",
-          parameters: [],
-          bodies: [
-            {
-              content_type: "application/json",
-              example: { name: "John Doe", email: "john@example.com" },
-            },
-          ],
-          responses: [
-            {
-              status_code: 201,
-              content_type: "application/json",
-              example: { id: 1, name: "John Doe", email: "john@example.com" },
-            },
-          ],
-        },
-      ],
     },
     updateExisting: {
       type: "boolean",
       required: false,
       defaultsTo: false,
-      description:
-        "If true, updates existing version instead of creating new one",
+      description: "If true, updates existing version instead of creating new one",
     },
   },
 
-  fn: async function ({
-    apiId,
-    versionName,
-    changelog,
-    endpoints,
-    updateExisting,
-  }) {
+  fn: async function ({ apiId, versionName, changelog, endpoints, updateExisting }) {
+    // CC ~6 — orquesta las funciones extraídas, no contiene lógica propia
     sails.log.verbose("-----> Helper: Registrar API Documentation");
-    const flaverr = require("flaverr");
-    const { v4: uuidv4 } = require("uuid");
 
     try {
       let result = {
@@ -102,228 +256,40 @@ module.exports = {
       };
 
       await Api.getDatastore().transaction(async (db) => {
-        // 1. Verificar que la API exista
-        const api = await Api.findOne({ id: apiId }).usingConnection(db);
-        if (!api) {
-          throw flaverr(
-            { code: "E_API_NOT_FOUND" },
-            new Error(`API with id ${apiId} not found`)
-          );
-        }
+        // 1. Verificar API
+        await resolverApi(apiId, db);
 
-        sails.log.verbose(`API encontrada: ${api.title}`);
-
-        // 2. Buscar o crear la versión
-        let apiVersion = await ApiVersion.findOne({
-          api_id: apiId,
-          version_name: versionName,
-        }).usingConnection(db);
-
-        if (apiVersion && !updateExisting) {
-          throw flaverr(
-            { code: "E_VERSION_EXISTS" },
-            new Error(
-              `Version ${versionName} already exists. Set updateExisting=true to update it.`
-            )
-          );
-        }
-
-        if (!apiVersion) {
-          // Crear nueva versión
-          apiVersion = await ApiVersion.create({
-            id: uuidv4(),
-            api_id: apiId,
-            version_name: versionName,
-            changelog: changelog || null,
-            created_at: new Date(),
-          })
-            .fetch()
-            .usingConnection(db);
-
-          sails.log.verbose(`Nueva versión creada: ${versionName}`);
-        } else {
-          // Actualizar versión existente
-          if (changelog) {
-            await ApiVersion.updateOne({ id: apiVersion.id })
-              .set({ changelog })
-              .usingConnection(db);
-          }
-
-          // Si se actualiza, eliminar endpoints antiguos
-          const oldEndpoints = await ApiEndpoint.find({
-            api_version_id: apiVersion.id,
-          }).usingConnection(db);
-
-          for (const oldEndpoint of oldEndpoints) {
-            // Eliminar parámetros, bodies y responses asociados
-            await ApiParameter.destroy({
-              endpoint_id: oldEndpoint.id,
-            }).usingConnection(db);
-            await ApiBody.destroy({
-              endpoint_id: oldEndpoint.id,
-            }).usingConnection(db);
-            await ApiResponse.destroy({
-              endpoint_id: oldEndpoint.id,
-            }).usingConnection(db);
-          }
-
-          // Eliminar los endpoints
-          await ApiEndpoint.destroy({
-            api_version_id: apiVersion.id,
-          }).usingConnection(db);
-
-          sails.log.verbose(`Versión actualizada: ${versionName}`);
-        }
-
+        // 2. Resolver versión
+        const apiVersion = await resolverVersion(
+          apiId, versionName, changelog, updateExisting, db
+        );
         result.version = apiVersion;
 
-        // 3. Crear los endpoints y sus relaciones
-        for (const endpointData of endpoints) {
-          // Validar datos requeridos del endpoint
-          if (!endpointData.path || !endpointData.method) {
-            sails.log.warn(
-              "Endpoint sin path o method, saltando:",
-              endpointData
-            );
-            continue;
-          }
-
-          // Validar método HTTP
-          const validMethods = ["GET", "POST", "PUT", "DELETE", "PATCH"];
-          if (!validMethods.includes(endpointData.method.toUpperCase())) {
-            sails.log.warn(
-              `Método inválido: ${endpointData.method}, saltando endpoint`
-            );
-            continue;
-          }
-
-          // Crear el endpoint
-          const endpoint = await ApiEndpoint.create({
-            id: uuidv4(),
-            api_version_id: apiVersion.id,
-            path: endpointData.path,
-            method: endpointData.method.toUpperCase(),
-            description: endpointData.description || null,
-            is_auth_endpoint:    endpointData.is_auth_endpoint    || false,
-            auth_notes:          endpointData.auth_notes           || null,
-            requires_token_from: endpointData.requires_token_from  || null,
-            created_at: new Date(),
-          })
-            .fetch()
-            .usingConnection(db);
-
-          sails.log.verbose(
-            `Endpoint creado: ${endpoint.method} ${endpoint.path}`
-          );
-
-          // Crear parámetros
-          // Fusionar query/path params con headers (que llegan como array separado)
-          const todosLosParams = [
-            ...(Array.isArray(endpointData.parameters) ? endpointData.parameters : []),
-            ...(Array.isArray(endpointData.headers)    ? endpointData.headers    : []),
-          ];
-
-          const parameters = [];
-          if (todosLosParams.length > 0) {
-            for (const paramData of todosLosParams) {
-              if (!paramData.name || !paramData.type) {
-                sails.log.warn(
-                  "Parámetro sin name o type, saltando:",
-                  paramData
-                );
-                continue;
-              }
-
-              const parameter = await ApiParameter.create({
-                id: uuidv4(),
-                endpoint_id: endpoint.id,
-                name: paramData.name,
-                type: paramData.type,
-                required: paramData.required || false,
-                description: paramData.description || null,
-                location: paramData.location || 'query',
-                example:  paramData.example  || null,
-              })
-                .fetch()
-                .usingConnection(db);
-
-              parameters.push(parameter);
-            }
-          }
-
-          // Crear bodies
-          const bodies = [];
-          if (endpointData.bodies && Array.isArray(endpointData.bodies)) {
-            for (const bodyData of endpointData.bodies) {
-              const body = await ApiBody.create({
-                id: uuidv4(),
-                endpoint_id: endpoint.id,
-                content_type: bodyData.content_type || "application/json",
-                example: bodyData.example || null,
-              })
-                .fetch()
-                .usingConnection(db);
-
-              bodies.push(body);
-            }
-          }
-
-          // Crear responses
-          const responses = [];
-          if (endpointData.responses && Array.isArray(endpointData.responses)) {
-            for (const responseData of endpointData.responses) {
-              if (!responseData.status_code) {
-                sails.log.warn(
-                  "Response sin status_code, saltando:",
-                  responseData
-                );
-                continue;
-              }
-
-              const response = await ApiResponse.create({
-                id: uuidv4(),
-                endpoint_id: endpoint.id,
-                status_code: responseData.status_code,
-                content_type: responseData.content_type || "application/json",
-                example: responseData.example || null,
-              })
-                .fetch()
-                .usingConnection(db);
-
-              responses.push(response);
-            }
-          }
-
-          result.endpoints.push({
-            endpoint,
-            parameters,
-            bodies,
-            responses,
-          });
-
-          if (updateExisting) {
-            result.totalUpdated++;
-          } else {
-            result.totalCreated++;
-          }
+        // 3. Limpiar endpoints antiguos si se está actualizando
+        if (updateExisting) {
+          await eliminarEndpointsAntiguos(apiVersion.id, db);
         }
 
-        sails.log.verbose(`=== Documentación registrada exitosamente ===`);
-        sails.log.verbose(
-          `Total endpoints procesados: ${result.endpoints.length}`
-        );
-        sails.log.verbose(
-          `Creados: ${result.totalCreated} | Actualizados: ${result.totalUpdated}`
-        );
+        // 4. Crear endpoints
+        for (const endpointData of endpoints) {
+          const endpointResult = await crearEndpointCompleto(
+            apiVersion.id, endpointData, db
+          );
+          if (!endpointResult) continue;
 
-        // Verificación final
+          result.endpoints.push(endpointResult);
+          updateExisting ? result.totalUpdated++ : result.totalCreated++;
+        }
+
+        // 5. Log de verificación final
         const finalEndpoints = await ApiEndpoint.find({
           api_version_id: apiVersion.id,
         }).usingConnection(db);
 
-        sails.log.verbose(
-          `Endpoints finales en BD para esta versión: ${finalEndpoints.length}`
-        );
+        sails.log.verbose(`=== Documentación registrada exitosamente ===`);
+        sails.log.verbose(`Total endpoints procesados: ${result.endpoints.length}`);
+        sails.log.verbose(`Creados: ${result.totalCreated} | Actualizados: ${result.totalUpdated}`);
+        sails.log.verbose(`Endpoints finales en BD: ${finalEndpoints.length}`);
         finalEndpoints.forEach((ep, idx) => {
           sails.log.verbose(`  ${idx + 1}. ${ep.method} ${ep.path} (${ep.id})`);
         });
@@ -348,10 +314,7 @@ module.exports = {
     } catch (error) {
       sails.log.error("Error en helper Registrar API Documentation:", error);
 
-      if (
-        error.code === "E_API_NOT_FOUND" ||
-        error.code === "E_VERSION_EXISTS"
-      ) {
+      if (error.code === "E_API_NOT_FOUND" || error.code === "E_VERSION_EXISTS") {
         throw error;
       }
 

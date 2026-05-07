@@ -3,7 +3,8 @@ const flaverr = require("flaverr");
 module.exports = {
   friendlyName: "normalizeUsername",
 
-  description: "Normaliza un nombre de usuario eliminando espacios y caracteres no válidos, con límite de 60 caracteres sin cortar palabras.",
+  description:
+    "Normaliza un nombre de usuario eliminando espacios y caracteres no válidos, con límite de 60 caracteres sin cortar palabras.",
 
   inputs: {
     name: {
@@ -23,9 +24,7 @@ module.exports = {
         .replace(/ñ/g, "n")
         .replace(/[^a-z0-9\s]/g, "");
 
-      username = username.replace(/\s+/g, ".");
-
-      username = username.replace(/\.{2,}/g, ".").replace(/^\.+|\.+$/g, "");
+      username = username.replace(/\s+/g, ".").replace(/^\.+|\.+$/g, "");
 
       if (username.length > 60) {
         const cutoff = username.substring(0, 60);
@@ -42,7 +41,7 @@ module.exports = {
       sails.log.error("Error normalizando username:", error.message);
       throw flaverr(
         { code: "USERNAME_NORMALIZATION_FAILED", name: "UsernameError" },
-        error
+        error,
       );
     }
   },

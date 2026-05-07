@@ -13,7 +13,7 @@ module.exports = function nokResponse(mensaje) {
       estado: "NOK",
       mensaje: mensaje || "Error en la ejecución",
     },
-    error: new Error(mensaje) || {},
+    error: new Error(mensaje),
   };
 
   return res.status(statusCodeToSet).send({ ejecucion: ejecucion });

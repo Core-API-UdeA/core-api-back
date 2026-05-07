@@ -1,0 +1,81 @@
+name: CI — Backend (Tests + SonarCloud)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test-and-sonar:
+    name: Unit Tests + Coverage + SonarCloud
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────────
+      # fetch-depth: 0 es obligatorio para SonarCloud — necesita todo el historial
+      # de git para calcular métricas de new code correctamente
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 2. Setup Node ─────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # ── 3. Instalar dependencias ──────────────────────────────────────────────
+      # npm ci es más estricto que npm install:
+      # usa exactamente package-lock.json, falla si hay diferencias
+      - name: Instalar dependencias
+        run: npm ci
+
+      # ── 4. Ejecutar SOLO tests unitarios con cobertura ────────────────────────
+      # Las pruebas de aceptación (Cucumber) requieren el servidor levantado,
+      # por eso en CI solo corremos las unitarias (Jest).
+      # npm run test:coverage debe estar definido en package.json como:
+      #   "test:coverage": "jest --config jest.config.js --coverage"
+      - name: Ejecutar tests unitarios con cobertura
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret-ci-only-not-real
+          # Clave de 32 bytes para AES-256-GCM usada en cifrar-credenciales.test.js
+          # Es un valor fijo de prueba — no es una credencial real de producción
+          GATEWAY_ENCRYPTION_KEY: 12345678901234567890123456789012
+
+      # ── 5. Verificar que el reporte LCOV existe ───────────────────────────────
+      # SonarCloud necesita este archivo para mostrar cobertura.
+      # Si Jest no lo generó, el paso falla antes de llegar a Sonar.
+      - name: Verificar reporte de cobertura
+        run: |
+          if [ ! -f coverage/lcov.info ]; then
+            echo "ERROR: coverage/lcov.info no encontrado"
+            echo "Asegúrate de que jest.config.js incluye coverageReporters: ['lcov']"
+            exit 1
+          fi
+          echo "✅ Reporte LCOV encontrado:"
+          wc -l coverage/lcov.info
+
+      # ── 6. Análisis SonarCloud ────────────────────────────────────────────────
+      # GITHUB_TOKEN: lo provee GitHub automáticamente, no necesitas configurarlo
+      # SONAR_TOKEN: debes crearlo en sonarcloud.io → My Account → Security
+      #              y agregarlo en GitHub → Settings → Secrets → Actions
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=Core-API-UdeA_core-api-back
+            -Dsonar.organization=core-api-udea
+            -Dsonar.sources=api,config
+            -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/__tests__/**,**/scripts/**,**/plantillas/**
+            -Dsonar.tests=__tests__/unit
+            -Dsonar.test.inclusions=**/*.test.js
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sourceEncoding=UTF-8

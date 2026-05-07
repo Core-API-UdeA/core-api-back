@@ -14,6 +14,8 @@ module.exports = {
     "api/helpers/auth/verify-jwt-token.js",
     "api/helpers/catalogo/registrar-valoracion-favorito.js",
     "api/policies/auth/validate-register-params.js",
+    "api/helpers/gateway/cifrar-credenciales.js",
+    "api/helpers/pagos/suscribir-gratis.js",
   ],
 
   testTimeout: 10000,
