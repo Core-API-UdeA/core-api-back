@@ -16,6 +16,8 @@ module.exports = {
     "api/policies/auth/validate-register-params.js",
     "api/helpers/gateway/cifrar-credenciales.js",
     "api/helpers/pagos/suscribir-gratis.js",
+    "api/controllers/auth/google-login.js",
+    "api/helpers/catalogo/registrar-api-documentation.js",
   ],
 
   testTimeout: 10000,
