@@ -41,7 +41,7 @@ module.exports = {
       });
     } catch (error) {
       if (error.code === "E_API_NOT_FOUND") {
-        throw "notFound";
+        throw new Error("API not found");
       }
       return exits.errorGeneral(error.message);
     }

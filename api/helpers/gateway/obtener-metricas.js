@@ -281,3 +281,11 @@ function _tendencia(actual, anterior) {
   if (anterior === 0) return actual > 0 ? 100 : 0;
   return parseFloat((((actual - anterior) / anterior) * 100).toFixed(1));
 }
+
+// ─── Exports privados (para tests unitarios) ──────────────────────────────────
+module.exports._private = {
+  _agruparPorDia,
+  _latenciaPorDia,
+  _consumoPorRegion,
+  _tendencia,
+};

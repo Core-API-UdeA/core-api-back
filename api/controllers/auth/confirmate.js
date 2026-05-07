@@ -32,21 +32,21 @@ module.exports = {
       });
 
       if (!user) {
-        throw "userNotFound";
+        throw new Error("userNotFound");
       }
 
       const currentTime = Date.now();
       const tokenExpiresAt = user.emailConfirmationTokenExpiresAt;
 
       if (tokenExpiresAt < currentTime) {
-        throw "invalidToken";
+        throw new Error("tokenExpired");
       }
 
       const maxTokenDuration = sails.config.register.emailConfirmationTokenTTL;
       const tokenAge = currentTime - (tokenExpiresAt - maxTokenDuration);
 
       if (tokenAge > maxTokenDuration) {
-        throw "tokenExpired";
+        throw new Error("tokenExpired");
       }
 
       await User.updateOne({ id: user.id }).set({
@@ -77,6 +77,12 @@ module.exports = {
       });
     } catch (error) {
       sails.log.error("Error en fetch:", error);
+      if (error.message === "userNotFound") {
+        return exits.errorGeneral("User not found");
+      }
+      if (error.message === "tokenExpired") {
+        return exits.errorGeneral("Token expired");
+      }
       return exits.errorGeneral("Error logging in user");
     }
   },

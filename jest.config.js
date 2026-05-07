@@ -18,6 +18,9 @@ module.exports = {
     "api/helpers/pagos/suscribir-gratis.js",
     "api/controllers/auth/google-login.js",
     "api/helpers/catalogo/registrar-api-documentation.js",
+    "api/helpers/pagos/mercadopago/procesar-webhook.js",
+    "api/helpers/gateway/obtener-metricas.js",
+    "api/controllers/gateway/proxy.js",
   ],
 
   testTimeout: 10000,

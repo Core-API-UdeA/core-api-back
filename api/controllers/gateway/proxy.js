@@ -150,7 +150,7 @@ module.exports = {
     sails.log.verbose('Gateway: Proxy →', req.method, urlDestino);
 
     try {
-      const { statusCode, headers: headersRespuesta, body } = await _hacerProxyRequest({
+      const { statusCode, headers: headersRespuesta, body } = await module.exports._private._hacerProxyRequest({
         method: req.method,
         url: urlDestino,
         headers: headersProveedor,
@@ -306,3 +306,10 @@ async function _actualizarMetrica(logId, statusCode, latenciaMs, errorMessage) {
     sails.log.error('Gateway: Error al actualizar ApiUsageLog:', err.message);
   }
 }
+
+module.exports._private = {
+  _hacerProxyRequest,
+  _construirUrlDestino,
+  _construirHeaders,
+  _actualizarMetrica,
+};
