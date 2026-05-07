@@ -2,7 +2,7 @@ module.exports = {
   friendlyName: "Obtener API Overview",
 
   description:
-    "Helper to get detailed overview information of a specific API, including owner, rating, and versions.",
+    "Helper to get detailed overview information of a specific API, including owner, rating, versions, and connection status.",
 
   inputs: {
     apiId: {
@@ -24,6 +24,13 @@ module.exports = {
           .populate("owner_id")
           .populate("versions");
 
+        if (!api) {
+          throw flaverr(
+            { code: "E_API_NOT_FOUND" },
+            new Error("API not found")
+          );
+        }
+
         // Organizar la información que quiero enviar al front
         api.owner_id = {
           username: api.owner_id.username,
@@ -36,13 +43,6 @@ module.exports = {
           changelog: v.changelog,
           created_at: v.created_at,
         }));
-
-        if (!api) {
-          throw flaverr(
-            { code: "E_API_NOT_FOUND" },
-            new Error("API not found")
-          );
-        }
 
         // Obtener cantidad de favoritos y calificaciones
         const interactions = await ApiUserInteraction.find({ api_id: apiId });
@@ -63,6 +63,12 @@ module.exports = {
             rating_average: averageRating,
             rating_count: totalRatings,
           })
+          .usingConnection(db);
+
+        // ── Estado de la conexión con el proveedor ─────────────────────────
+        // Buscamos la conexión activa (o cualquiera) para mostrar el badge
+        // de "API segura" en el frontend.
+        const connection = await ApiConnection.findOne({ api_id: apiId })
           .usingConnection(db);
 
         // Formatear la salida final
@@ -86,6 +92,17 @@ module.exports = {
             : null,
           versions: api.versions || [],
           created_at: api.created_at,
+
+          // Conexión: solo exponemos lo necesario para que el front sepa
+          // si mostrar el badge de "API segura" y el estado.
+          connection: connection
+            ? {
+                status: connection.status, // 'pending' | 'active' | 'failed'
+                last_checked_at: connection.last_checked_at || null,
+                last_check_status_code: connection.last_check_status_code || null,
+                last_check_latency_ms: connection.last_check_latency_ms || null,
+              }
+            : null,
         };
       });
 

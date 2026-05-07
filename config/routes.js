@@ -84,6 +84,7 @@ module.exports.routes = addGlobalPrefix({
   // ─── GATEWAY - GESTIÓN DE CONEXIONES (proveedor) ─────────────────────────
   "GET /gateway/metricas/:apiId":      { action: "gateway/obtener-metricas" },
   "POST /gateway/conexion":           { action: "gateway/registrar-conexion" },
+  "GET  /gateway/conexion/:apiId":    { action: "gateway/obtener-conexion" },
   "POST /gateway/conexion/verificar": { action: "gateway/verificar-conexion" },
 
   // ─── GATEWAY DE PROXY ────────────────────────────────────────────────────

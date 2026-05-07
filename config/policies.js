@@ -21,5 +21,6 @@ module.exports.policies = {
   "catalogo/obtener-api-documentation": ['auth/try-authenticated'],
   "catalogo/listar-planes": ['auth/try-authenticated'],
 
-  "gateway/proxy": ["auth/is-authenticated"],
+
+  'gateway/*': 'auth/is-authenticated'
 };
