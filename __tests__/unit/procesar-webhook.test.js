@@ -655,3 +655,326 @@ describe('crearSuscripcionDesdePago', () => {
   });
 
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests adicionales para subir cobertura de procesar-webhook.js
+// Cubren: procesarPago (con reintentos), procesarPagoSandboxFallback, procesarOrden
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('procesarPago — Reintentos y rutas alternativas', () => {
+
+  // Mock dinámico de Payment para controlar payment.get() en cada test
+  let getMock;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+
+    getMock = jest.fn();
+
+    const mp = require('mercadopago');
+    mp.Payment.mockImplementation(() => ({ get: getMock }));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('PW-23 | Happy path: payment.get retorna info → llama procesarPagoConInfo', async () => {
+
+    getMock.mockResolvedValue({
+      id: 1234,
+      status: 'approved',
+      external_reference: 'trx-1',
+    });
+
+    const spy = jest
+      .spyOn(helper._private, 'procesarPagoConInfo')
+      .mockResolvedValue(true);
+
+    await helper._private.procesarPago({}, 1234, false);
+
+    expect(getMock).toHaveBeenCalledWith({ id: 1234 });
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1234, status: 'approved' })
+    );
+  });
+
+  test('PW-24 | Si paymentInfo es undefined después del loop → log.warn y return', async () => {
+
+    // Simular que payment.get nunca lanza pero retorna undefined.
+    // Esto rompe el while porque entra al try, asigna undefined, hace break.
+    getMock.mockResolvedValue(undefined);
+
+    const spy = jest
+      .spyOn(helper._private, 'procesarPagoConInfo')
+      .mockResolvedValue(true);
+
+    await helper._private.procesarPago({}, 1234, false);
+
+    expect(sails.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('No se pudo obtener información')
+    );
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('PW-25 | 404 con reintentos: falla 1 vez, encuentra en intento 2', async () => {
+
+    getMock
+      .mockRejectedValueOnce({ status: 404 })
+      .mockResolvedValueOnce({
+        id: 5555,
+        status: 'approved',
+        external_reference: 'trx-x',
+      });
+
+    jest.spyOn(helper._private, 'procesarPagoConInfo').mockResolvedValue(true);
+
+    const promise = helper._private.procesarPago({}, 5555, false);
+
+    // Avanzar el timer del retryDelay (5000ms en no-sandbox)
+    await jest.advanceTimersByTimeAsync(5000);
+
+    await promise;
+
+    expect(getMock).toHaveBeenCalledTimes(2);
+    expect(sails.log.verbose).toHaveBeenCalledWith(
+      expect.stringContaining('reintento 1/3')
+    );
+  });
+
+  test('PW-26 | Sandbox: falla todos los intentos con 404 → llama procesarPagoSandboxFallback', async () => {
+
+    getMock.mockRejectedValue({ status: 404 });
+
+    const fallbackSpy = jest
+      .spyOn(helper._private, 'procesarPagoSandboxFallback')
+      .mockResolvedValue('fallback-result');
+
+    const promise = helper._private.procesarPago({}, 9999, true);
+
+    // En sandbox: 5 intentos x 8000ms = 40 segundos
+    // Avanzar el tiempo total (suficiente para todos los reintentos)
+    for (let i = 0; i < 5; i++) {
+      await jest.advanceTimersByTimeAsync(8000);
+    }
+
+    const result = await promise;
+
+    expect(result).toBe('fallback-result');
+    expect(fallbackSpy).toHaveBeenCalledWith(9999);
+    expect(sails.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('sandbox')
+    );
+  });
+
+  test('PW-27 | No-sandbox: falla todos los intentos con 404 → throw', async () => {
+
+    getMock.mockRejectedValue({ status: 404 });
+
+    const promise = helper._private.procesarPago({}, 7777, false);
+
+    // IMPORTANTE: adjuntar el assertion de rejection ANTES de avanzar timers
+    // para que Jest sepa que la rejection será manejada (evita unhandled rejection).
+    const expectation = expect(promise).rejects.toMatchObject({ status: 404 });
+
+    // No-sandbox: 3 intentos x 5000ms
+    for (let i = 0; i < 3; i++) {
+      await jest.advanceTimersByTimeAsync(5000);
+    }
+
+    await expectation;
+
+    expect(sails.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('no encontrado después de 3 intentos')
+    );
+  });
+
+  test('PW-28 | Otro tipo de error (no 404) → relanza inmediatamente', async () => {
+
+    getMock.mockRejectedValue(new Error('Network down'));
+
+    await expect(
+      helper._private.procesarPago({}, 8888, false)
+    ).rejects.toThrow('Network down');
+
+    // No debería haberse hecho ningún reintento
+    expect(getMock).toHaveBeenCalledTimes(1);
+  });
+
+});
+
+describe('procesarPagoSandboxFallback', () => {
+
+  beforeEach(() => {
+
+    global.Api = {
+      getDatastore: jest.fn(() => ({
+        transaction: async (cb) => cb('mock-db'),
+      })),
+    };
+
+    global.ApiTransaction = {
+      find: jest.fn(),
+      updateOne: jest.fn(() => ({
+        set: jest.fn(() => ({
+          usingConnection: jest.fn().mockResolvedValue(true),
+        })),
+      })),
+    };
+  });
+
+  /**
+   * Helper para construir el chain ApiTransaction.find().sort().limit().usingConnection()
+   */
+  function mockFindChain(returnValue) {
+    ApiTransaction.find.mockReturnValue({
+      sort: jest.fn(() => ({
+        limit: jest.fn(() => ({
+          usingConnection: jest.fn().mockResolvedValue(returnValue),
+        })),
+      })),
+    });
+  }
+
+  test('PW-29 | Sin transacciones pendientes → log.warn y return', async () => {
+
+    mockFindChain([]);
+
+    await helper._private.procesarPagoSandboxFallback(123);
+
+    expect(sails.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('No hay transacciones pendientes')
+    );
+    expect(ApiTransaction.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('PW-30 | Con transacción pendiente y sin subscription_id → actualiza y crea suscripción', async () => {
+
+    mockFindChain([
+      {
+        id: 'trx-pending-1',
+        payment_metadata: { foo: 'bar' },
+        subscription_id: null,
+      },
+    ]);
+
+    const setMock = jest.fn(() => ({
+      usingConnection: jest.fn().mockResolvedValue(true),
+    }));
+    ApiTransaction.updateOne.mockReturnValue({ set: setMock });
+
+    const crearSpy = jest
+      .spyOn(helper._private, 'crearSuscripcionDesdePago')
+      .mockResolvedValue(true);
+
+    await helper._private.procesarPagoSandboxFallback(456);
+
+    expect(ApiTransaction.updateOne).toHaveBeenCalledWith({ id: 'trx-pending-1' });
+    const payload = setMock.mock.calls[0][0];
+    expect(payload.payment_status).toBe('completed');
+    expect(payload.payment_metadata.sandbox_fallback).toBe(true);
+
+    expect(crearSpy).toHaveBeenCalled();
+  });
+
+  test('PW-31 | Con transacción pendiente que YA tiene subscription_id → no crea suscripción', async () => {
+
+    mockFindChain([
+      {
+        id: 'trx-pending-2',
+        payment_metadata: {},
+        subscription_id: 'sub-existing',
+      },
+    ]);
+
+    const crearSpy = jest
+      .spyOn(helper._private, 'crearSuscripcionDesdePago')
+      .mockResolvedValue(true);
+
+    await helper._private.procesarPagoSandboxFallback(789);
+
+    expect(crearSpy).not.toHaveBeenCalled();
+  });
+
+  test('PW-32 | Error en BD durante fallback → relanza y registra log.error', async () => {
+
+    Api.getDatastore.mockReturnValue({
+      transaction: jest.fn().mockRejectedValue(new Error('DB connection lost')),
+    });
+
+    await expect(
+      helper._private.procesarPagoSandboxFallback(999)
+    ).rejects.toThrow('DB connection lost');
+
+    expect(sails.log.error).toHaveBeenCalledWith(
+      expect.stringContaining('fallback de sandbox'),
+      expect.any(Error)
+    );
+  });
+
+});
+
+describe('procesarOrden', () => {
+
+  let getMock;
+
+  beforeEach(() => {
+    getMock = jest.fn();
+
+    const mp = require('mercadopago');
+    mp.MerchantOrder.mockImplementation(() => ({ get: getMock }));
+  });
+
+  test('PW-33 | Happy path: retorna info de la orden y registra log', async () => {
+
+    getMock.mockResolvedValue({
+      id: 'order-1',
+      status: 'closed',
+      external_reference: 'ext-ref-1',
+    });
+
+    await helper._private.procesarOrden({}, 'order-1', false);
+
+    expect(getMock).toHaveBeenCalledWith({ merchantOrderId: 'order-1' });
+    expect(sails.log.verbose).toHaveBeenCalledWith(
+      'Información de la orden:',
+      expect.objectContaining({ id: 'order-1' })
+    );
+  });
+
+  test('PW-34 | Error 404 → log.warn y return (no relanza)', async () => {
+
+    getMock.mockRejectedValue({ status: 404 });
+
+    await expect(
+      helper._private.procesarOrden({}, 'order-404', false)
+    ).resolves.toBeUndefined();
+
+    expect(sails.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('no encontrada en MP')
+    );
+  });
+
+  test('PW-35 | Error not_found (variante alternativa) → log.warn y return', async () => {
+
+    getMock.mockRejectedValue({ error: 'not_found' });
+
+    await expect(
+      helper._private.procesarOrden({}, 'order-nf', false)
+    ).resolves.toBeUndefined();
+
+    expect(sails.log.warn).toHaveBeenCalled();
+  });
+
+  test('PW-36 | Otro tipo de error → log.error y relanza', async () => {
+
+    getMock.mockRejectedValue(new Error('Auth failed'));
+
+    await expect(
+      helper._private.procesarOrden({}, 'order-err', false)
+    ).rejects.toThrow('Auth failed');
+
+    expect(sails.log.error).toHaveBeenCalled();
+  });
+
+});

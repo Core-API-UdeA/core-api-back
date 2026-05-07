@@ -21,6 +21,10 @@ module.exports = {
     "api/helpers/pagos/mercadopago/procesar-webhook.js",
     "api/helpers/gateway/obtener-metricas.js",
     "api/controllers/gateway/proxy.js",
+
+    "api/helpers/catalogo/actualizar-views.js",
+    "api/helpers/pagos/crear-checkout.js",
+    "api/helpers/catalogo/registrar-api-overview.js",
   ],
 
   testTimeout: 10000,
