@@ -22,5 +22,5 @@ module.exports.policies = {
   "catalogo/listar-planes": ['auth/try-authenticated'],
 
 
-  'gateway/*': 'auth/is-authenticated'
+  'gateway/*': 'auth/gateway-access',
 };

@@ -221,6 +221,9 @@ function _construirHeaders(headersOriginales, apiConnection, credencial) {
     'host', 'authorization', 'cookie', 'x-forwarded-for',
     'x-forwarded-host', 'x-forwarded-proto', 'x-real-ip',
     'connection', 'upgrade', 'proxy-authorization',
+    // Headers de autenticación de CoreAPI — nunca deben llegar al proveedor.
+    // Son para identificar al consumidor contra nosotros, no contra el proveedor.
+    'x-api-key', 'x-apikey',
   ]);
 
   const headers = {};
