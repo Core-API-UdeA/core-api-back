@@ -60,6 +60,7 @@ module.exports.routes = addGlobalPrefix({
   "GET /catalogo/planes": "catalogo/listar-planes",
   "POST /catalogo/planes": "catalogo/gestionar-plan",
   "PUT /catalogo/planes/:planId": "catalogo/gestionar-plan",
+  "POST /catalogo/generar-documentacion-ia": { action: "catalogo/generar-documentacion-ia" },
 
   // PAGOS
 

@@ -21,6 +21,7 @@ module.exports.policies = {
   "catalogo/obtener-api-documentation": ['auth/try-authenticated'],
   "catalogo/listar-planes": ['auth/try-authenticated'],
 
+  "pagos/verificar-pago": true,
 
   'gateway/*': 'auth/gateway-access',
 };

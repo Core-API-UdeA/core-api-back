@@ -1,11 +1,3 @@
-/**
- * api/helpers/pagos/suscribir-gratis.js
- *
- * Activa una suscripción gratuita (price = 0) directamente, sin pasar
- * por ninguna pasarela de pago. Crea la suscripción y la transacción
- * con status 'completed' en una sola transacción de BD.
- */
-
 module.exports = {
   friendlyName: 'Suscribir gratis',
 
@@ -85,6 +77,7 @@ module.exports = {
 
         // 4. Crear la suscripción activa directamente
         const suscripcionId = uuidv4();
+        const crypto = require('crypto');
         const suscripcion = await ApiSubscription.create({
           id:         suscripcionId,
           user_id:    userId,
@@ -96,6 +89,8 @@ module.exports = {
           requests_used_this_day:   0,
           last_reset_date: ahora,
           auto_renew: true,
+          // API Key única para usar el gateway desde fuera de CoreAPI
+          api_key:    `sk_live_${crypto.randomBytes(32).toString('hex')}`,
           created_at: ahora,
           updated_at: ahora,
         }).fetch().usingConnection(db);
