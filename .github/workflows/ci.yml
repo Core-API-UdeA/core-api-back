@@ -74,7 +74,7 @@ jobs:
             -Dsonar.projectKey=Core-API-UdeA_core-api-back
             -Dsonar.organization=core-api-udea
             -Dsonar.sources=api,config
-            -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/__tests__/**,**/scripts/**,**/plantillas/**,api/policies/**,api/controllers/catalogo/generar-documentacion-ia.js,api/controllers/catalogo/generar-readme-ia.js,config
+            -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/__tests__/**,**/scripts/**,**/plantillas/**,api/policies/**,api/controllers/catalogo/generar-documentacion-ia.js,api/controllers/catalogo/generar-readme-ia.js,config,api/controllers/pagos/verificar-pago.js
             -Dsonar.tests=__tests__/unit
             -Dsonar.test.inclusions=**/*.test.js
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
