@@ -46,4 +46,12 @@ module.exports = {
   GATEWAY_ENCRYPTION_KEY: process.env.GATEWAY_ENCRYPTION_KEY,
 
   groqApiKey: process.env.GROQ_API_KEY,
+
+  contact: {
+    recipients: [
+      ...(process.env.CONTACT_RECIPIENTS
+        ? process.env.CONTACT_RECIPIENTS.split(",").map((email) => email.trim())
+        : []),
+    ],
+  },
 };

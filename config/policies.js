@@ -22,6 +22,7 @@ module.exports.policies = {
   "catalogo/listar-planes": ['auth/try-authenticated'],
 
   "pagos/verificar-pago": true,
+  "util/enviar-contacto": true,
 
   'gateway/*': 'auth/gateway-access',
 };
