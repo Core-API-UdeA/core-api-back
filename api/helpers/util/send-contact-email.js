@@ -77,7 +77,7 @@ module.exports = {
         },
         body: JSON.stringify({
           from:     "CoreAPI <onboarding@resend.dev>",
-          to:       recipients[0],
+          to:       "andres.lema1@udea.edu.co",
           reply_to: `"${name}" <${email}>`,
           subject:  `📬 Nuevo mensaje de contacto — ${name}`,
           html,
