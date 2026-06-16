@@ -62,11 +62,7 @@ module.exports = {
         .replace(/{{ip}}/g,        escape(ip || "desconocida"));
 
       // ─── Destinatarios ────────────────────────────────────────────────
-      const recipients = sails.config.contact?.recipients || [
-        "lalfonso.castano@udea.edu.co",
-        "jose.henao1@udea.edu.co",
-        "andres.lema1@udea.edu.co",
-      ];
+      const recipients = sails.config.contact?.recipients;
 
       // ─── Llamada a Resend API ─────────────────────────────────────────
       const response = await fetch("https://api.resend.com/emails", {
@@ -77,7 +73,7 @@ module.exports = {
         },
         body: JSON.stringify({
           from:     "CoreAPI <onboarding@resend.dev>",
-          to:       "andres.lema1@udea.edu.co",
+          to:       "juan.lema1408@gmail.com",
           reply_to: `"${name}" <${email}>`,
           subject:  `📬 Nuevo mensaje de contacto — ${name}`,
           html,
