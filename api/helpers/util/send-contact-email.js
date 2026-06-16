@@ -5,20 +5,37 @@
  * Reutiliza la configuración SMTP de Gmail ya existente (sails.config.register).
  */
 
-const flaverr     = require("flaverr");
-const nodemailer  = require("nodemailer");
-const fs          = require("fs");
-const path        = require("path");
+const flaverr = require("flaverr");
+const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   friendlyName: "sendContactEmail",
-  description: "Envía un email del formulario de contacto al equipo de CoreAPI.",
+  description:
+    "Envía un email del formulario de contacto al equipo de CoreAPI.",
 
   inputs: {
-    name:    { type: "string", required: true,  description: "Nombre del remitente." },
-    email:   { type: "string", required: true,  description: "Correo del remitente." },
-    message: { type: "string", required: true,  description: "Cuerpo del mensaje." },
-    ip:      { type: "string", required: false, description: "IP del remitente para auditoría." },
+    name: {
+      type: "string",
+      required: true,
+      description: "Nombre del remitente.",
+    },
+    email: {
+      type: "string",
+      required: true,
+      description: "Correo del remitente.",
+    },
+    message: {
+      type: "string",
+      required: true,
+      description: "Cuerpo del mensaje.",
+    },
+    ip: {
+      type: "string",
+      required: false,
+      description: "IP del remitente para auditoría.",
+    },
   },
 
   fn: async function ({ name, email, message, ip }) {
@@ -27,17 +44,22 @@ module.exports = {
 
       // Cargar plantilla HTML
       const templatePath = path.join(
-        __dirname, "..", "..", "..",
-        "plantillas", "contact-email.html"
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "plantillas",
+        "contact-email.html",
       );
       let html = fs.readFileSync(templatePath, "utf8");
 
       // Sanitizar para evitar HTML injection en el preview del cliente de correo
-      const escape = (s) => String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+      const escape = (s) =>
+        String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
 
       const timestamp = new Date().toLocaleString("es-CO", {
         timeZone: "America/Bogota",
@@ -46,21 +68,25 @@ module.exports = {
       });
 
       html = html
-        .replace(/{{name}}/g,      escape(name))
-        .replace(/{{email}}/g,     escape(email))
-        .replace(/{{message}}/g,   escape(message))
+        .replace(/{{name}}/g, escape(name))
+        .replace(/{{email}}/g, escape(email))
+        .replace(/{{message}}/g, escape(message))
         .replace(/{{timestamp}}/g, escape(timestamp))
-        .replace(/{{ip}}/g,        escape(ip || "desconocida"));
+        .replace(/{{ip}}/g, escape(ip || "desconocida"));
 
       // Transporter (mismo de send-confirmation-email)
       const transporter = nodemailer.createTransport({
-        host:   "smtp.gmail.com",
-        port:   465,
-        secure: true,
+        host: "smtp.gmail.com",
+        port: 587, // ← antes 465
+        secure: false, // ← antes true
+        requireTLS: true, // ← nuevo
         auth: {
           user: sails.config.register.user,
           pass: sails.config.register.pass,
         },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
       });
 
       // Destinatarios — pueden estar todos en sails.config.contact.recipients
@@ -72,9 +98,9 @@ module.exports = {
       ];
 
       const mailOptions = {
-        from:    `"CoreAPI Contacto" <${sails.config.register.user}>`,
-        to:      recipients.join(", "),
-        replyTo: `"${name}" <${email}>`,   // permite responder directamente al usuario
+        from: `"CoreAPI Contacto" <${sails.config.register.user}>`,
+        to: recipients.join(", "),
+        replyTo: `"${name}" <${email}>`, // permite responder directamente al usuario
         subject: `📬 Nuevo mensaje de contacto — ${name}`,
         html,
       };
@@ -83,12 +109,11 @@ module.exports = {
       sails.log.info("Email de contacto enviado:", info.messageId);
 
       return { success: true, messageId: info.messageId };
-
     } catch (error) {
       sails.log.error("Error enviando email de contacto:", error.message);
       throw flaverr(
         { code: "EMAIL_SEND_FAILED", name: "EmailSendError" },
-        error
+        error,
       );
     }
   },

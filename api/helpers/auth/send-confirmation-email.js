@@ -45,13 +45,17 @@ module.exports = {
         .replace(/{{confirmationUrl}}/g, confirmationUrl);
 
       const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
+        host:    "smtp.gmail.com",
+        port:    587,            // ← antes 465
+        secure:  false,          // ← antes true
+        requireTLS: true,        // ← nuevo
         auth: {
           user: sails.config.register.user,
           pass: sails.config.register.pass,
         },
+        connectionTimeout: 10000,
+        greetingTimeout:   10000,
+        socketTimeout:     15000,
       });
 
       const mailOptions = {
