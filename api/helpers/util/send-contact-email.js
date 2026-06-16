@@ -76,7 +76,7 @@ module.exports = {
           "Content-Type":  "application/json",
         },
         body: JSON.stringify({
-          from:     sails.config.resend.fromEmail || "CoreAPI <onboarding@resend.dev>",
+          from:     "CoreAPI <onboarding@resend.dev>",
           to:       recipients,
           reply_to: `"${name}" <${email}>`,
           subject:  `📬 Nuevo mensaje de contacto — ${name}`,

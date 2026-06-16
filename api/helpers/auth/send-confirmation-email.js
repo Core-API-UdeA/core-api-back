@@ -62,7 +62,7 @@ module.exports = {
           "Content-Type":  "application/json",
         },
         body: JSON.stringify({
-          from:    sails.config.resend.fromEmail || "CoreAPI <onboarding@resend.dev>",
+          from:    "CoreAPI <onboarding@resend.dev>",
           to:      [to],
           subject: "Confirma tu correo electrónico",
           html:    htmlTemplate,
