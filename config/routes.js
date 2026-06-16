@@ -100,6 +100,9 @@ module.exports.routes = addGlobalPrefix({
   "PATCH /gateway/:apiSlug/*": { action: "gateway/proxy" },
   "DELETE /gateway/:apiSlug/*": { action: "gateway/proxy" },
 
+  // RUTAS DE UTILIDAD
+  "POST /util/contacto": { action: "util/enviar-contacto" },
+
   // ─── RUTA DE MONITOREO DE LA API ─────────────────────────────────────────
 
   "GET /": (req, res) => {
