@@ -46,6 +46,14 @@ module.exports = {
       // --- FILTRO DINÁMICO ---
       let filtroWhere = {};
 
+      if (filter?.asunto) {
+        filtroWhere.title = { contains: filter.asunto.trim() };;
+      }
+
+      if (filter?.technology) {
+        filtroWhere.technology_stack = filter.technology;
+      }
+
       if (filter?.myApis) {
         filtroWhere.owner_id = userId.id;
       }
